@@ -1,0 +1,22 @@
+## .NET
+bin/
+obj/
+*.user
+.vs/
+*.suo
+
+## SQLite databases
+*.db
+*.db-wal
+*.db-shm
+
+## dotnet secrets
+appsettings.Production.json
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## Rider / VS Code
+.idea/
+.vscode/

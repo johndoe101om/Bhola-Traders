@@ -1,0 +1,8 @@
+# build.yaml — tells drift_dev how to generate code
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Use older style for compatibility
+          generate_connect_constructor: false
