@@ -1,0 +1,11 @@
+node_modules/
+.playwright-cli/
+test-results/
+playwright-report/
+.agents/
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.env
