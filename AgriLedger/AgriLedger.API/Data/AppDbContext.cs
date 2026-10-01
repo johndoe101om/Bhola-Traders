@@ -11,6 +11,9 @@ public class AppDbContext : DbContext
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<BagMovement> BagMovements => Set<BagMovement>();
     public DbSet<SyncQueueItem> SyncQueue => Set<SyncQueueItem>();
+    public DbSet<Employee> Employees => Set<Employee>();
+    public DbSet<Attendance> Attendances => Set<Attendance>();
+    public DbSet<EmployeePayment> EmployeePayments => Set<EmployeePayment>();
 
     protected override void OnModelCreating(ModelBuilder mb)
     {
@@ -106,6 +109,73 @@ public class AppDbContext : DbContext
 
             e.HasIndex(s => new { s.EntityType, s.CreatedAt });
             e.HasIndex(s => s.ProcessedAt);
+        });
+
+        // ── EMPLOYEE ───────────────────────────────────────────────────
+        mb.Entity<Employee>(e =>
+        {
+            e.HasKey(emp => emp.Id);
+            e.Property(emp => emp.Id).HasMaxLength(36);
+            e.Property(emp => emp.Name).HasMaxLength(200).IsRequired();
+            e.Property(emp => emp.Phone).HasMaxLength(15);
+            e.Property(emp => emp.Email).HasMaxLength(100);
+            e.Property(emp => emp.DailyWageRate).HasPrecision(10, 2);
+            e.Property(emp => emp.AadhaarNumber).HasMaxLength(20);
+            e.Property(emp => emp.Address).HasMaxLength(500);
+            e.Property(emp => emp.EmployeeType).HasMaxLength(20).IsRequired();
+            e.Property(emp => emp.TeamGroup).HasMaxLength(50);
+            e.Property(emp => emp.EmergencyContact).HasMaxLength(100);
+            e.Property(emp => emp.Notes).HasMaxLength(500);
+
+            e.HasIndex(emp => emp.Name);
+            e.HasIndex(emp => emp.EmployeeType);
+            e.HasIndex(emp => emp.TeamGroup);
+            e.HasIndex(emp => emp.IsActive);
+        });
+
+        // ── ATTENDANCE ─────────────────────────────────────────────────
+        mb.Entity<Attendance>(e =>
+        {
+            e.HasKey(a => a.Id);
+            e.Property(a => a.Id).HasMaxLength(36);
+            e.Property(a => a.EmployeeId).HasMaxLength(36).IsRequired();
+            e.Property(a => a.Status).HasMaxLength(20).IsRequired();
+            e.Property(a => a.AbsenceReason).HasMaxLength(1000);
+            e.Property(a => a.VoiceRaw).HasMaxLength(1000);
+            e.Property(a => a.OvertimeHours).HasPrecision(5, 2);
+            e.Property(a => a.Notes).HasMaxLength(500);
+
+            e.HasIndex(a => new { a.EmployeeId, a.AttendanceDate }).IsUnique();
+            e.HasIndex(a => a.AttendanceDate);
+            e.HasIndex(a => a.Status);
+
+            e.HasOne(a => a.Employee)
+             .WithMany(emp => emp.Attendances)
+             .HasForeignKey(a => a.EmployeeId)
+             .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── EMPLOYEE PAYMENT ───────────────────────────────────────────
+        mb.Entity<EmployeePayment>(e =>
+        {
+            e.HasKey(ep => ep.Id);
+            e.Property(ep => ep.Id).HasMaxLength(36);
+            e.Property(ep => ep.EmployeeId).HasMaxLength(36).IsRequired();
+            e.Property(ep => ep.Amount).HasPrecision(12, 2).IsRequired();
+            e.Property(ep => ep.PaymentMode).HasMaxLength(20).IsRequired();
+            e.Property(ep => ep.PaymentType).HasMaxLength(20).IsRequired();
+            e.Property(ep => ep.ReferenceNumber).HasMaxLength(100);
+            e.Property(ep => ep.Notes).HasMaxLength(500);
+            e.Property(ep => ep.VoiceRaw).HasMaxLength(1000);
+
+            e.HasIndex(ep => ep.EmployeeId);
+            e.HasIndex(ep => ep.PaymentDate);
+            e.HasIndex(ep => ep.PaymentType);
+
+            e.HasOne(ep => ep.Employee)
+             .WithMany(emp => emp.EmployeePayments)
+             .HasForeignKey(ep => ep.EmployeeId)
+             .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

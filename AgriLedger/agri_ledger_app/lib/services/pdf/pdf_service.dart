@@ -20,15 +20,16 @@ import '../../data/local/local_database.dart';
 
 // Brand colors in PDF
 const _green = PdfColor.fromInt(0xFF2E7D32);
-const _red   = PdfColor.fromInt(0xFFC62828);
-const _blue  = PdfColor.fromInt(0xFF1565C0);
-const _grey  = PdfColor.fromInt(0xFF757575);
+const _red = PdfColor.fromInt(0xFFC62828);
+const _blue = PdfColor.fromInt(0xFF1565C0);
+const _grey = PdfColor.fromInt(0xFF757575);
 const _light = PdfColor.fromInt(0xFFF5F5F5);
 const _white = PdfColors.white;
 
-final _rupee = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
+final _rupee =
+    NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 final _dateF = DateFormat('d MMM yyyy');
-final _dtF   = DateFormat('d MMM yyyy, h:mm a');
+final _dtF = DateFormat('d MMM yyyy, h:mm a');
 
 String _fmt(double v) => _rupee.format(v);
 String _fmtDate(String iso) {
@@ -38,7 +39,6 @@ String _fmtDate(String iso) {
 
 // ─────────────────────────────────────────────────────────────────────
 class PdfService {
-
   // ── 1. TRANSACTION RECEIPT ────────────────────────────────────────
   // Used after saving a transaction — shareable on WhatsApp, print on thermal
 
@@ -73,14 +73,16 @@ class PdfService {
           // ── RECEIPT TITLE ────────────────────────────────────────
           pw.Center(
             child: pw.Text('रसीद / RECEIPT',
-              style: pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
+                style:
+                    pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
           ),
           pw.SizedBox(height: 12),
 
           // ── RECEIPT META ─────────────────────────────────────────
           _TwoCol('तारीख / Date', entryDate, font, fontBold),
           _TwoCol('पार्टी / Party', partyName, font, fontBold),
-          if (village != null) _TwoCol('गाँव / Village', village, font, fontBold),
+          if (village != null)
+            _TwoCol('गाँव / Village', village, font, fontBold),
           _TwoCol('प्रकार / Type', txnLabel, font, fontBold),
           pw.SizedBox(height: 8),
           _Divider(),
@@ -88,15 +90,17 @@ class PdfService {
 
           // ── GRAIN DETAILS (if applicable) ────────────────────────
           if (txn.commodity != null) ...[
-            _TwoCol('अनाज / Commodity',
-              '${_commodityEmoji(txn.commodity!)} ${txn.commodity!.toUpperCase()}',
-              font, fontBold),
+            _TwoCol(
+                'अनाज / Commodity',
+                '${_commodityEmoji(txn.commodity!)} ${txn.commodity!.toUpperCase()}',
+                font,
+                fontBold),
             if (txn.quantityKg != null)
               _TwoCol('वजन / Weight',
-                '${txn.quantityKg!.toStringAsFixed(1)} KG', font, fontBold),
+                  '${txn.quantityKg!.toStringAsFixed(1)} KG', font, fontBold),
             if (txn.ratePerKg != null)
               _TwoCol('रेट / Rate per KG',
-                '₹ ${txn.ratePerKg!.toStringAsFixed(0)}', font, fontBold),
+                  '₹ ${txn.ratePerKg!.toStringAsFixed(0)}', font, fontBold),
             pw.SizedBox(height: 8),
             _Divider(),
             pw.SizedBox(height: 8),
@@ -114,20 +118,23 @@ class PdfService {
             child: pw.Column(
               children: [
                 pw.Text('कुल रकम / Total Amount',
-                  style: pw.TextStyle(font: font, fontSize: 13, color: _grey)),
+                    style:
+                        pw.TextStyle(font: font, fontSize: 13, color: _grey)),
                 pw.SizedBox(height: 6),
                 pw.Text(_fmt(txn.amount),
-                  style: pw.TextStyle(font: fontBold, fontSize: 32, color: amountColor)),
+                    style: pw.TextStyle(
+                        font: fontBold, fontSize: 32, color: amountColor)),
                 pw.SizedBox(height: 4),
                 pw.Text(isIn ? '(प्राप्त / Received)' : '(भुगतान / Paid)',
-                  style: pw.TextStyle(font: font, fontSize: 12, color: amountColor)),
+                    style: pw.TextStyle(
+                        font: font, fontSize: 12, color: amountColor)),
               ],
             ),
           ),
 
           pw.SizedBox(height: 12),
-          _TwoCol('भुगतान / Payment Mode',
-            txn.paymentMode.toUpperCase(), font, fontBold),
+          _TwoCol('भुगतान / Payment Mode', txn.paymentMode.toUpperCase(), font,
+              fontBold),
 
           if (txn.notes != null) ...[
             pw.SizedBox(height: 8),
@@ -169,9 +176,8 @@ class PdfService {
 
     final doc = pw.Document();
     final balanceColor = balance >= 0 ? _green : _red;
-    final balanceLabel = balance >= 0
-      ? 'हमारा बाकी / They owe us'
-      : 'उनका बाकी / We owe them';
+    final balanceLabel =
+        balance >= 0 ? 'हमारा बाकी / They owe us' : 'उनका बाकी / We owe them';
 
     // ── PAGE 1: SUMMARY ───────────────────────────────────────────
     doc.addPage(pw.Page(
@@ -189,19 +195,25 @@ class PdfService {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-                pw.Text('खाता विवरण / ACCOUNT STATEMENT',
-                  style: pw.TextStyle(font: fontBold, fontSize: 16, color: _green)),
-                pw.SizedBox(height: 4),
-                pw.Text('${party.name}  •  ${party.partyType.toUpperCase()}',
-                  style: pw.TextStyle(font: fontBold, fontSize: 13)),
-                if (party.village != null)
-                  pw.Text(party.village!,
-                    style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
-                if (party.phone != null)
-                  pw.Text('📞 ${party.phone}',
-                    style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
-              ]),
+              pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text('खाता विवरण / ACCOUNT STATEMENT',
+                        style: pw.TextStyle(
+                            font: fontBold, fontSize: 16, color: _green)),
+                    pw.SizedBox(height: 4),
+                    pw.Text(
+                        '${party.name}  •  ${party.partyType.toUpperCase()}',
+                        style: pw.TextStyle(font: fontBold, fontSize: 13)),
+                    if (party.village != null)
+                      pw.Text(party.village!,
+                          style: pw.TextStyle(
+                              font: font, fontSize: 11, color: _grey)),
+                    if (party.phone != null)
+                      pw.Text('📞 ${party.phone}',
+                          style: pw.TextStyle(
+                              font: font, fontSize: 11, color: _grey)),
+                  ]),
               // Balance box
               pw.Container(
                 padding: const pw.EdgeInsets.all(12),
@@ -214,12 +226,15 @@ class PdfService {
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
                     pw.Text(balanceLabel,
-                      style: pw.TextStyle(font: font, fontSize: 10, color: balanceColor)),
+                        style: pw.TextStyle(
+                            font: font, fontSize: 10, color: balanceColor)),
                     pw.Text(_fmt(balance.abs()),
-                      style: pw.TextStyle(font: fontBold, fontSize: 22, color: balanceColor)),
+                        style: pw.TextStyle(
+                            font: fontBold, fontSize: 22, color: balanceColor)),
                     if (bagsOutstanding > 0)
                       pw.Text('📦 $bagsOutstanding बोरी बाकी',
-                        style: pw.TextStyle(font: font, fontSize: 10, color: _blue)),
+                          style: pw.TextStyle(
+                              font: font, fontSize: 10, color: _blue)),
                   ],
                 ),
               ),
@@ -238,16 +253,17 @@ class PdfService {
 
           // ── TRANSACTIONS TABLE ────────────────────────────────────
           pw.Text('लेन-देन / Transactions',
-            style: pw.TextStyle(font: fontBold, fontSize: 14)),
+              style: pw.TextStyle(font: fontBold, fontSize: 14)),
           pw.SizedBox(height: 8),
 
           if (transactions.isEmpty)
             pw.Text('कोई लेन-देन नहीं / No transactions',
-              style: pw.TextStyle(font: font, color: _grey))
+                style: pw.TextStyle(font: font, color: _grey))
           else
             _TxnTable(
               transactions: transactions,
-              font: font, fontBold: fontBold,
+              font: font,
+              fontBold: fontBold,
             ),
 
           pw.SizedBox(height: 20),
@@ -255,7 +271,7 @@ class PdfService {
           // ── BAG MOVEMENTS TABLE ───────────────────────────────────
           if (bagMovements.isNotEmpty) ...[
             pw.Text('बोरी विवरण / Bag Movements',
-              style: pw.TextStyle(font: fontBold, fontSize: 14)),
+                style: pw.TextStyle(font: fontBold, fontSize: 14)),
             pw.SizedBox(height: 8),
             _BagTable(bags: bagMovements, font: font, fontBold: fontBold),
             pw.SizedBox(height: 16),
@@ -264,7 +280,8 @@ class PdfService {
           pw.Spacer(),
           _Divider(),
           pw.SizedBox(height: 8),
-          pw.Center(child: pw.Text(
+          pw.Center(
+              child: pw.Text(
             'Bhola Traders  •  Generated ${_dtF.format(DateTime.now())}',
             style: pw.TextStyle(font: font, fontSize: 9, color: _grey),
           )),
@@ -292,10 +309,14 @@ class PdfService {
 
     for (final t in transactions) {
       switch (t.txnType) {
-        case 'purchase': purchase += t.amount;
-        case 'sale':     sale     += t.amount;
-        case 'cash_in':  cashIn   += t.amount;
-        case 'cash_out': cashOut  += t.amount;
+        case 'purchase':
+          purchase += t.amount;
+        case 'sale':
+          sale += t.amount;
+        case 'cash_in':
+          cashIn += t.amount;
+        case 'cash_out':
+          cashOut += t.amount;
       }
       byDate.putIfAbsent(t.entryDate, () => []).add(t);
     }
@@ -306,15 +327,17 @@ class PdfService {
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(32),
-      header: (ctx) => _Header(businessName: businessName, font: font, fontBold: fontBold),
-      footer: (ctx) => pw.Center(child: pw.Text(
+      header: (ctx) =>
+          _Header(businessName: businessName, font: font, fontBold: fontBold),
+      footer: (ctx) => pw.Center(
+          child: pw.Text(
         'Bhola Traders  •  Page ${ctx.pageNumber}/${ctx.pagesCount}',
         style: pw.TextStyle(font: font, fontSize: 9, color: _grey),
       )),
       build: (ctx) => [
         pw.SizedBox(height: 16),
         pw.Text('व्यापार रिपोर्ट / BUSINESS REPORT',
-          style: pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
+            style: pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
         pw.Text(
           '${_dateF.format(from)} — ${_dateF.format(to)}',
           style: pw.TextStyle(font: font, fontSize: 12, color: _grey),
@@ -331,10 +354,11 @@ class PdfService {
           ),
           child: pw.Column(children: [
             pw.Row(children: [
-              _SummaryCell('खरीदी\nPurchase', _fmt(purchase), _red, font, fontBold),
-              _SummaryCell('बिक्री\nSale',     _fmt(sale),     _green, font, fontBold),
-              _SummaryCell('Cash In',          _fmt(cashIn),   _green, font, fontBold),
-              _SummaryCell('Cash Out',         _fmt(cashOut),  _red,   font, fontBold),
+              _SummaryCell(
+                  'खरीदी\nPurchase', _fmt(purchase), _red, font, fontBold),
+              _SummaryCell('बिक्री\nSale', _fmt(sale), _green, font, fontBold),
+              _SummaryCell('Cash In', _fmt(cashIn), _green, font, fontBold),
+              _SummaryCell('Cash Out', _fmt(cashOut), _red, font, fontBold),
             ]),
             pw.SizedBox(height: 12),
             pw.Divider(),
@@ -343,14 +367,18 @@ class PdfService {
               mainAxisAlignment: pw.MainAxisAlignment.center,
               children: [
                 pw.Text('नेट / NET : ',
-                  style: pw.TextStyle(font: fontBold, fontSize: 16)),
+                    style: pw.TextStyle(font: fontBold, fontSize: 16)),
                 pw.Text(_fmt(net.abs()),
-                  style: pw.TextStyle(font: fontBold, fontSize: 22,
-                    color: net >= 0 ? _green : _red)),
+                    style: pw.TextStyle(
+                        font: fontBold,
+                        fontSize: 22,
+                        color: net >= 0 ? _green : _red)),
                 pw.SizedBox(width: 8),
                 pw.Text(net >= 0 ? '(लाभ / Profit)' : '(हानि / Loss)',
-                  style: pw.TextStyle(font: font, fontSize: 12,
-                    color: net >= 0 ? _green : _red)),
+                    style: pw.TextStyle(
+                        font: font,
+                        fontSize: 12,
+                        color: net >= 0 ? _green : _red)),
               ],
             ),
           ]),
@@ -360,14 +388,20 @@ class PdfService {
 
         // ── DAILY BREAKDOWN ───────────────────────────────────────
         pw.Text('दिन-वार विवरण / Daily Breakdown',
-          style: pw.TextStyle(font: fontBold, fontSize: 14)),
+            style: pw.TextStyle(font: fontBold, fontSize: 14)),
         pw.SizedBox(height: 8),
 
         pw.Table(
           border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
           children: [
-_TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री', 'Cash In', 'Cash Out', 'Net'],
-              font: fontBold),
+            _TableHeader([
+              'तारीख / Date',
+              'खरीदी',
+              'बिक्री',
+              'Cash In',
+              'Cash Out',
+              'Net'
+            ], font: fontBold),
             ..._buildDailyBreakdownRows(byDate, font, fontBold),
           ],
         ),
@@ -376,10 +410,13 @@ _TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री',
 
         // ── ALL TRANSACTIONS DETAIL ───────────────────────────────
         pw.Text('सभी एंट्री / All Transactions',
-          style: pw.TextStyle(font: fontBold, fontSize: 14)),
+            style: pw.TextStyle(font: fontBold, fontSize: 14)),
         pw.SizedBox(height: 8),
-        _TxnTable(transactions: transactions, font: font, fontBold: fontBold,
-          showParty: true),
+        _TxnTable(
+            transactions: transactions,
+            font: font,
+            fontBold: fontBold,
+            showParty: true),
       ],
     ));
 
@@ -396,8 +433,8 @@ _TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री',
     required String? village,
   }) {
     final sb = StringBuffer();
-    final line = '================================';
-    final shortLine = '----------------';
+    const line = '================================';
+    const shortLine = '----------------';
 
     sb.writeln(businessName.toUpperCase());
     sb.writeln('Bhola Traders कृषि बही-खाता');
@@ -426,7 +463,9 @@ _TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री',
     if (txn.notes != null) sb.writeln('नोट:   ${txn.notes}');
     sb.writeln(line);
     sb.writeln('Bhola Traders  ${DateTime.now().year}');
-    sb.writeln(); sb.writeln(); sb.writeln(); // Feed lines
+    sb.writeln();
+    sb.writeln();
+    sb.writeln(); // Feed lines
 
     return sb.toString();
   }
@@ -443,7 +482,8 @@ _TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री',
   // ── PRINT VIA SYSTEM DIALOG ───────────────────────────────────────
   // Works for: WiFi printers, PDF viewers, Google Cloud Print
 
-  static Future<void> printPdf(Uint8List bytes, {String name = 'Bhola Traders'}) async {
+  static Future<void> printPdf(Uint8List bytes,
+      {String name = 'Bhola Traders'}) async {
     await Printing.layoutPdf(
       onLayout: (_) async => bytes,
       name: name,
@@ -459,16 +499,19 @@ _TableHeader(['तारीख / Date', 'खरीदी', 'बिक्री',
   // ── HELPERS ───────────────────────────────────────────────────────
 
   static String _txnLabel(String type) => switch (type) {
-    'purchase' => 'खरीदी / Purchase',
-    'sale'     => 'बिक्री / Sale',
-    'cash_in'  => 'पैसा मिला / Cash In',
-    'cash_out' => 'पैसा दिया / Cash Out',
-    _ => type,
-  };
+        'purchase' => 'खरीदी / Purchase',
+        'sale' => 'बिक्री / Sale',
+        'cash_in' => 'पैसा मिला / Cash In',
+        'cash_out' => 'पैसा दिया / Cash Out',
+        _ => type,
+      };
 
-static String _commodityEmoji(String c) => switch (c) {
-    'rice' => '🌾', 'wheat' => '🌿', 'maize' => '🌽', _ => '📦',
-  };
+  static String _commodityEmoji(String c) => switch (c) {
+        'rice' => '🌾',
+        'wheat' => '🌿',
+        'maize' => '🌽',
+        _ => '📦',
+      };
 
   /// Builds daily breakdown rows for the report table
   static List<pw.TableRow> _buildDailyBreakdownRows(
@@ -484,10 +527,14 @@ static String _commodityEmoji(String c) => switch (c) {
       double p = 0, s = 0, ci = 0, co = 0;
       for (final t in txns) {
         switch (t.txnType) {
-          case 'purchase': p += t.amount;
-          case 'sale':     s += t.amount;
-          case 'cash_in':  ci += t.amount;
-          case 'cash_out': co += t.amount;
+          case 'purchase':
+            p += t.amount;
+          case 'sale':
+            s += t.amount;
+          case 'cash_in':
+            ci += t.amount;
+          case 'cash_out':
+            co += t.amount;
         }
       }
       final dayNet = (s + ci) - (p + co);
@@ -515,42 +562,45 @@ pw.Widget _Header({
   required String businessName,
   required pw.Font font,
   required pw.Font fontBold,
-}) => pw.Row(
-  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  children: [
-    pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-      pw.Text(businessName,
-        style: pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
-      pw.Text('कृषि बही-खाता / Agricultural Ledger',
-        style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
-    ]),
-    pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: pw.BoxDecoration(
-        color: _green.shade(0.08),
-        borderRadius: pw.BorderRadius.circular(6),
-      ),
-      child: pw.Text('🌾 Bhola Traders',
-        style: pw.TextStyle(font: fontBold, fontSize: 12, color: _green)),
-    ),
-  ],
-);
+}) =>
+    pw.Row(
+      mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+      children: [
+        pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+          pw.Text(businessName,
+              style: pw.TextStyle(font: fontBold, fontSize: 18, color: _green)),
+          pw.Text('कृषि बही-खाता / Agricultural Ledger',
+              style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
+        ]),
+        pw.Container(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: pw.BoxDecoration(
+            color: _green.shade(0.08),
+            borderRadius: pw.BorderRadius.circular(6),
+          ),
+          child: pw.Text('🌾 Bhola Traders',
+              style: pw.TextStyle(font: fontBold, fontSize: 12, color: _green)),
+        ),
+      ],
+    );
 
 pw.Widget _Divider() => pw.Divider(color: PdfColors.grey300, thickness: 0.5);
 
 pw.Widget _TwoCol(String label, String value, pw.Font font, pw.Font fontBold) =>
-  pw.Padding(
-    padding: const pw.EdgeInsets.symmetric(vertical: 3),
-    child: pw.Row(children: [
-      pw.SizedBox(width: 140,
-        child: pw.Text(label,
-          style: pw.TextStyle(font: font, fontSize: 11, color: _grey))),
-      pw.Text(':  ', style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
-      pw.Expanded(
-        child: pw.Text(value,
-          style: pw.TextStyle(font: fontBold, fontSize: 12))),
-    ]),
-  );
+    pw.Padding(
+      padding: const pw.EdgeInsets.symmetric(vertical: 3),
+      child: pw.Row(children: [
+        pw.SizedBox(
+            width: 140,
+            child: pw.Text(label,
+                style: pw.TextStyle(font: font, fontSize: 11, color: _grey))),
+        pw.Text(':  ',
+            style: pw.TextStyle(font: font, fontSize: 11, color: _grey)),
+        pw.Expanded(
+            child: pw.Text(value,
+                style: pw.TextStyle(font: fontBold, fontSize: 12))),
+      ]),
+    );
 
 pw.Widget _TxnTable({
   required List<TransactionsTableData> transactions,
@@ -559,80 +609,85 @@ pw.Widget _TxnTable({
   bool showParty = false,
 }) {
   final headers = showParty
-    ? ['तारीख', 'पार्टी', 'प्रकार', 'अनाज', 'KG', 'रेट', 'रकम / Amount']
-    : ['तारीख', 'प्रकार', 'अनाज', 'KG', 'रेट', 'रकम / Amount'];
-
-  double running = 0;
+      ? ['तारीख', 'पार्टी', 'प्रकार', 'अनाज', 'KG', 'रेट', 'रकम / Amount']
+      : ['तारीख', 'प्रकार', 'अनाज', 'KG', 'रेट', 'रकम / Amount'];
 
   return pw.Table(
     border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-    columnWidths: showParty ? {
-      0: const pw.FixedColumnWidth(62),
-      1: const pw.FixedColumnWidth(70),
-      2: const pw.FixedColumnWidth(55),
-      3: const pw.FixedColumnWidth(40),
-      4: const pw.FixedColumnWidth(36),
-      5: const pw.FixedColumnWidth(34),
-      6: const pw.FixedColumnWidth(60),
-    } : {
-      0: const pw.FixedColumnWidth(70),
-      1: const pw.FixedColumnWidth(70),
-      2: const pw.FixedColumnWidth(50),
-      3: const pw.FixedColumnWidth(50),
-      4: const pw.FixedColumnWidth(40),
-      5: const pw.FixedColumnWidth(72),
-    },
+    columnWidths: showParty
+        ? {
+            0: const pw.FixedColumnWidth(62),
+            1: const pw.FixedColumnWidth(70),
+            2: const pw.FixedColumnWidth(55),
+            3: const pw.FixedColumnWidth(40),
+            4: const pw.FixedColumnWidth(36),
+            5: const pw.FixedColumnWidth(34),
+            6: const pw.FixedColumnWidth(60),
+          }
+        : {
+            0: const pw.FixedColumnWidth(70),
+            1: const pw.FixedColumnWidth(70),
+            2: const pw.FixedColumnWidth(50),
+            3: const pw.FixedColumnWidth(50),
+            4: const pw.FixedColumnWidth(40),
+            5: const pw.FixedColumnWidth(72),
+          },
     children: [
       // Header
       pw.TableRow(
         decoration: const pw.BoxDecoration(color: _green),
-        children: headers.map((h) => pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          child: pw.Text(h,
-            style: pw.TextStyle(font: fontBold, fontSize: 9, color: _white)),
-        )).toList(),
+        children: headers
+            .map((h) => pw.Padding(
+                  padding:
+                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                  child: pw.Text(h,
+                      style: pw.TextStyle(
+                          font: fontBold, fontSize: 9, color: _white)),
+                ))
+            .toList(),
       ),
       // Rows
       ...transactions.reversed.map((t) {
-        running += t.direction == 'in' ? t.amount : -t.amount;
         final isIn = t.direction == 'in';
         final rowBg = isIn ? _green.shade(0.04) : _red.shade(0.04);
         final amtColor = isIn ? _green : _red;
 
         final cells = showParty
-          ? [
-              _fmtDate(t.entryDate), t.partyId,
-              _txnLabelShort(t.txnType),
-              t.commodity ?? '-',
-              t.quantityKg?.toStringAsFixed(0) ?? '-',
-              t.ratePerKg?.toStringAsFixed(0) ?? '-',
-              '${isIn ? '+' : '-'}${_rupee.format(t.amount)}',
-            ]
-          : [
-              _fmtDate(t.entryDate),
-              _txnLabelShort(t.txnType),
-              t.commodity ?? '-',
-              t.quantityKg?.toStringAsFixed(0) ?? '-',
-              t.ratePerKg?.toStringAsFixed(0) ?? '-',
-              '${isIn ? '+' : '-'}${_rupee.format(t.amount)}',
-            ];
+            ? [
+                _fmtDate(t.entryDate),
+                t.partyId,
+                _txnLabelShort(t.txnType),
+                t.commodity ?? '-',
+                t.quantityKg?.toStringAsFixed(0) ?? '-',
+                t.ratePerKg?.toStringAsFixed(0) ?? '-',
+                '${isIn ? '+' : '-'}${_rupee.format(t.amount)}',
+              ]
+            : [
+                _fmtDate(t.entryDate),
+                _txnLabelShort(t.txnType),
+                t.commodity ?? '-',
+                t.quantityKg?.toStringAsFixed(0) ?? '-',
+                t.ratePerKg?.toStringAsFixed(0) ?? '-',
+                '${isIn ? '+' : '-'}${_rupee.format(t.amount)}',
+              ];
 
-return pw.TableRow(
+        return pw.TableRow(
           decoration: pw.BoxDecoration(color: rowBg),
           children: [
             for (var i = 0; i < cells.length; i++)
               pw.Padding(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: pw.Text(cells[i],
-                  style: pw.TextStyle(
-                    font: i == cells.length - 1 ? fontBold : font,
-                    fontSize: 9,
-                    color: i == cells.length - 1 ? amtColor : PdfColors.black,
-                  )),
+                    style: pw.TextStyle(
+                      font: i == cells.length - 1 ? fontBold : font,
+                      fontSize: 9,
+                      color: i == cells.length - 1 ? amtColor : PdfColors.black,
+                    )),
               ),
           ],
         );
-      }).toList(),
+      }),
     ],
   );
 }
@@ -641,77 +696,108 @@ pw.Widget _BagTable({
   required List<BagMovementsTableData> bags,
   required pw.Font font,
   required pw.Font fontBold,
-}) => pw.Table(
-  border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
-  children: [
-    pw.TableRow(
-      decoration: const pw.BoxDecoration(color: _blue),
-      children: ['तारीख / Date', 'प्रकार / Type', 'संख्या / Qty', 'नोट / Notes']
-        .map((h) => pw.Padding(
-          padding: const pw.EdgeInsets.all(6),
-          child: pw.Text(h,
-            style: pw.TextStyle(font: fontBold, fontSize: 9, color: _white)),
-        )).toList(),
-    ),
-    ...bags.map((b) => pw.TableRow(
+}) =>
+    pw.Table(
+      border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
       children: [
-        _fmtDate(b.entryDate), b.movement, '${b.quantity}', b.notes ?? '-'
-      ].map((c) => pw.Padding(
-        padding: const pw.EdgeInsets.all(6),
-        child: pw.Text(c, style: pw.TextStyle(font: font, fontSize: 9)),
-      )).toList(),
-    )),
-  ],
-);
+        pw.TableRow(
+          decoration: const pw.BoxDecoration(color: _blue),
+          children:
+              ['तारीख / Date', 'प्रकार / Type', 'संख्या / Qty', 'नोट / Notes']
+                  .map((h) => pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text(h,
+                            style: pw.TextStyle(
+                                font: fontBold, fontSize: 9, color: _white)),
+                      ))
+                  .toList(),
+        ),
+        ...bags.map((b) => pw.TableRow(
+              children: [
+                _fmtDate(b.entryDate),
+                b.movement,
+                '${b.quantity}',
+                b.notes ?? '-'
+              ]
+                  .map((c) => pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text(c,
+                            style: pw.TextStyle(font: font, fontSize: 9)),
+                      ))
+                  .toList(),
+            )),
+      ],
+    );
 
 pw.Widget _SummaryCell(
-  String label, String value, PdfColor color,
-  pw.Font font, pw.Font fontBold,
-) => pw.Expanded(
-  child: pw.Container(
-    margin: const pw.EdgeInsets.symmetric(horizontal: 4),
-    padding: const pw.EdgeInsets.all(10),
-    decoration: pw.BoxDecoration(
-      color: color.shade(0.06),
-      borderRadius: pw.BorderRadius.circular(6),
-    ),
-    child: pw.Column(children: [
-      pw.Text(label, textAlign: pw.TextAlign.center,
-        style: pw.TextStyle(font: font, fontSize: 9, color: _grey)),
-      pw.SizedBox(height: 4),
-      pw.Text(value,
-        style: pw.TextStyle(font: fontBold, fontSize: 12, color: color)),
-    ]),
-  ),
-);
+  String label,
+  String value,
+  PdfColor color,
+  pw.Font font,
+  pw.Font fontBold,
+) =>
+    pw.Expanded(
+      child: pw.Container(
+        margin: const pw.EdgeInsets.symmetric(horizontal: 4),
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          color: color.shade(0.06),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Column(children: [
+          pw.Text(label,
+              textAlign: pw.TextAlign.center,
+              style: pw.TextStyle(font: font, fontSize: 9, color: _grey)),
+          pw.SizedBox(height: 4),
+          pw.Text(value,
+              style: pw.TextStyle(font: fontBold, fontSize: 12, color: color)),
+        ]),
+      ),
+    );
 
 pw.TableRow _TableHeader(List<String> cols, {required pw.Font font}) =>
-  pw.TableRow(
-    decoration: const pw.BoxDecoration(color: _light),
-    children: cols.map((c) => pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      child: pw.Text(c, style: pw.TextStyle(font: font, fontSize: 9)),
-    )).toList(),
-  );
+    pw.TableRow(
+      decoration: const pw.BoxDecoration(color: _light),
+      children: cols
+          .map((c) => pw.Padding(
+                padding:
+                    const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                child: pw.Text(c, style: pw.TextStyle(font: font, fontSize: 9)),
+              ))
+          .toList(),
+    );
 
-pw.TableRow _TableRow(List<String> cells, {
-  required pw.Font font, PdfColor? netColor,
-}) => pw.TableRow(
-  children: cells.asMap().map((i, c) => MapEntry(i,
-    pw.Container(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: pw.Text(c, style: pw.TextStyle(
-        font: font, fontSize: 9,
-        color: (i == cells.length - 1 && netColor != null) ? netColor : PdfColors.black,
-      )),
-    ),
-  )).values.toList(),
-);
+pw.TableRow _TableRow(
+  List<String> cells, {
+  required pw.Font font,
+  PdfColor? netColor,
+}) =>
+    pw.TableRow(
+      children: cells
+          .asMap()
+          .map((i, c) => MapEntry(
+                i,
+                pw.Container(
+                  padding:
+                      const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: pw.Text(c,
+                      style: pw.TextStyle(
+                        font: font,
+                        fontSize: 9,
+                        color: (i == cells.length - 1 && netColor != null)
+                            ? netColor
+                            : PdfColors.black,
+                      )),
+                ),
+              ))
+          .values
+          .toList(),
+    );
 
 String _txnLabelShort(String type) => switch (type) {
-  'purchase' => 'खरीदी',
-  'sale'     => 'बिक्री',
-  'cash_in'  => 'Cash In',
-  'cash_out' => 'Cash Out',
-  _ => type,
-};
+      'purchase' => 'खरीदी',
+      'sale' => 'बिक्री',
+      'cash_in' => 'Cash In',
+      'cash_out' => 'Cash Out',
+      _ => type,
+    };

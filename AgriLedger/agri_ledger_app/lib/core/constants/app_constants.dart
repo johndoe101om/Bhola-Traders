@@ -5,13 +5,19 @@ class AppConstants {
   AppConstants._();
 
   // ── API ─────────────────────────────────────────────────────
-  static const String baseUrl = 'http://192.168.1.11:5000'; // Change to your server IP
+  static const String baseUrl =
+      'http://192.168.1.11:5000'; // Change to your server IP
   static const String apiVersion = '/api/v1';
   static const String defaultPin = '9199';
 
   // ── BUSINESS ────────────────────────────────────────────────
   static const List<String> partyTypes = ['farmer', 'supplier', 'customer'];
-  static const List<String> txnTypes = ['purchase', 'sale', 'cash_in', 'cash_out'];
+  static const List<String> txnTypes = [
+    'purchase',
+    'sale',
+    'cash_in',
+    'cash_out'
+  ];
   static const List<String> commodities = ['rice', 'wheat', 'maize'];
   static const List<String> paymentModes = ['cash', 'upi', 'credit'];
   static const List<String> bagMovements = ['given', 'returned'];
@@ -59,5 +65,53 @@ class AppConstants {
     'rice': '🌾',
     'wheat': '🌿',
     'maize': '🌽',
+  };
+
+  // ── EMPLOYEES ────────────────────────────────────────────────
+  static const List<String> employeeTypes = [
+    'labour',
+    'driver',
+    'supervisor',
+    'other'
+  ];
+  static const List<String> attendanceStatuses = [
+    'present',
+    'absent',
+    'half_day',
+    'overtime',
+    'holiday'
+  ];
+  static const List<String> employeePaymentModes = [
+    'cash',
+    'upi',
+    'bank_transfer'
+  ];
+  static const List<String> employeePaymentTypes = [
+    'wage',
+    'advance',
+    'bonus',
+    'deduction',
+    'settlement'
+  ];
+
+  static const Map<String, String> employeeTypeLabels = {
+    'labour': 'मज़दूर',
+    'driver': 'ड्राइवर',
+    'supervisor': 'सुपरवाइज़र',
+    'other': 'अन्य',
+  };
+  static const Map<String, String> attendanceStatusLabels = {
+    'present': 'उपस्थित',
+    'absent': 'अनुपस्थित',
+    'half_day': 'आधा दिन',
+    'overtime': 'ओवरटाइम',
+    'holiday': 'छुट्टी',
+  };
+  static const Map<String, String> employeePaymentTypeLabels = {
+    'wage': 'मज़दूरी',
+    'advance': 'एडवांस',
+    'bonus': 'बोनस',
+    'deduction': 'कटौती',
+    'settlement': 'हिसाब',
   };
 }

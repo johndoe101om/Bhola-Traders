@@ -64,7 +64,9 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
                   Icon(Icons.circle, color: Colors.green[700], size: 10),
                   const SizedBox(width: 6),
                   Text('Connected',
-                    style: TextStyle(color: Colors.green[700], fontWeight: FontWeight.w700)),
+                      style: TextStyle(
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w700)),
                 ],
               ),
             ),
@@ -84,32 +86,39 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
               child: ListTile(
                 leading: Icon(Icons.warning_rounded, color: Colors.orange[700]),
                 title: const Text('Bluetooth Permission Required',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: const Text('Tap to open Settings and grant permission'),
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                subtitle:
+                    const Text('Tap to open Settings and grant permission'),
                 onTap: openAppSettings,
               ),
             ),
 
           // ── SCAN BUTTON ───────────────────────────────────────
           ElevatedButton.icon(
-            onPressed: _permissionsGranted &&
-                printer.status != PrinterStatus.scanning
-              ? () => ref.read(thermalPrinterProvider).startScan()
-              : null,
+            onPressed:
+                _permissionsGranted && printer.status != PrinterStatus.scanning
+                    ? () => ref.read(thermalPrinterProvider).startScan()
+                    : null,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               minimumSize: const Size(double.infinity, 56),
             ),
             icon: printer.status == PrinterStatus.scanning
-              ? const SizedBox(width: 20, height: 20,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.bluetooth_searching_rounded, color: Colors.white),
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : const Icon(Icons.bluetooth_searching_rounded,
+                    color: Colors.white),
             label: Text(
               printer.status == PrinterStatus.scanning
-                ? 'खोज रहे हैं... / Scanning...'
-                : 'Bluetooth Scan करें / Scan',
-              style: const TextStyle(color: Colors.white, fontSize: 18,
-                fontWeight: FontWeight.w700),
+                  ? 'खोज रहे हैं... / Scanning...'
+                  : 'Bluetooth Scan करें / Scan',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 16),
@@ -117,18 +126,18 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
           // ── DEVICE LIST ───────────────────────────────────────
           if (printer.foundDevices.isNotEmpty) ...[
             const Text('मिले डिवाइस / Found Devices',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
-            ...printer.foundDevices.map((device) =>
-              _DeviceTile(
-                device: device,
-                isConnected: printer.isConnected &&
-                  printer.connectedDeviceName == device.name,
-                isConnecting: printer.status == PrinterStatus.connecting,
-                onTap: () => _connectTo(device.id),
-              )
-            ),
+            ...printer.foundDevices.map((device) => _DeviceTile(
+                  device: device,
+                  isConnected: printer.isConnected &&
+                      printer.connectedDeviceName == device.name,
+                  isConnecting: printer.status == PrinterStatus.connecting,
+                  onTap: () => _connectTo(device.id),
+                )),
           ],
 
           const SizedBox(height: 24),
@@ -138,8 +147,10 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
             const Divider(),
             const SizedBox(height: 12),
             const Text('टेस्ट प्रिंट / Test Print',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-                color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             OutlinedButton.icon(
               onPressed: () async {
@@ -149,13 +160,16 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
                   bagsOutstanding: 3,
                 );
                 if (context.mounted) {
-                  if (ok) showSuccess(context, 'Test print sent!');
-                  else showError(context, 'Print failed — check printer');
+                  if (ok) {
+                    showSuccess(context, 'Test print sent!');
+                  } else {
+                    showError(context, 'Print failed — check printer');
+                  }
                 }
               },
               icon: const Icon(Icons.print_rounded),
               label: const Text('Test Slip Print करें',
-                style: TextStyle(fontSize: 16)),
+                  style: TextStyle(fontSize: 16)),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 52),
                 side: const BorderSide(color: AppTheme.primary),
@@ -164,8 +178,10 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
             const SizedBox(height: 12),
             TextButton.icon(
               onPressed: () => ref.read(thermalPrinterProvider).disconnect(),
-              icon: Icon(Icons.bluetooth_disabled_rounded, color: Colors.red[400]),
-              label: Text('Disconnect', style: TextStyle(color: Colors.red[400], fontSize: 16)),
+              icon: Icon(Icons.bluetooth_disabled_rounded,
+                  color: Colors.red[400]),
+              label: Text('Disconnect',
+                  style: TextStyle(color: Colors.red[400], fontSize: 16)),
             ),
           ],
 
@@ -182,10 +198,13 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(children: [
-                  Icon(Icons.info_outline_rounded, color: Colors.blue[700], size: 20),
+                  Icon(Icons.info_outline_rounded,
+                      color: Colors.blue[700], size: 20),
                   const SizedBox(width: 8),
                   Text('Supported Printers',
-                    style: TextStyle(color: Colors.blue[700], fontWeight: FontWeight.w700)),
+                      style: TextStyle(
+                          color: Colors.blue[700],
+                          fontWeight: FontWeight.w700)),
                 ]),
                 const SizedBox(height: 8),
                 const Text(
@@ -196,7 +215,8 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
                   'For Classic Bluetooth SPP printers,\n'
                   'use the "bluetooth_print" package instead.\n\n'
                   'Paper roll: 58mm or 80mm thermal',
-                  style: TextStyle(fontSize: 13, height: 1.5, color: AppTheme.textSecondary),
+                  style: TextStyle(
+                      fontSize: 13, height: 1.5, color: AppTheme.textSecondary),
                 ),
               ],
             ),
@@ -210,8 +230,11 @@ class _PrinterSetupScreenState extends ConsumerState<PrinterSetupScreen> {
     final printer = ref.read(thermalPrinterProvider);
     final ok = await printer.connect(deviceId);
     if (mounted) {
-      if (ok) showSuccess(context, 'Printer connected! 🖨️');
-      else showError(context, printer.errorMessage ?? 'Connection failed');
+      if (ok) {
+        showSuccess(context, 'Printer connected! 🖨️');
+      } else {
+        showError(context, printer.errorMessage ?? 'Connection failed');
+      }
     }
   }
 }
@@ -226,30 +249,41 @@ class _StatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, color, label, sublabel) = switch (printer.status) {
       PrinterStatus.connected => (
-        Icons.print_rounded, Colors.green[700]!,
-        'Connected / जुड़ा हुआ',
-        printer.connectedDeviceName ?? 'Unknown printer',
-      ),
+          Icons.print_rounded,
+          Colors.green[700]!,
+          'Connected / जुड़ा हुआ',
+          printer.connectedDeviceName ?? 'Unknown printer',
+        ),
       PrinterStatus.connecting => (
-        Icons.bluetooth_searching_rounded, Colors.blue[700]!,
-        'Connecting...', 'Please wait',
-      ),
+          Icons.bluetooth_searching_rounded,
+          Colors.blue[700]!,
+          'Connecting...',
+          'Please wait',
+        ),
       PrinterStatus.scanning => (
-        Icons.bluetooth_searching_rounded, Colors.blue[700]!,
-        'Scanning... / खोज रहे हैं', 'Looking for printers nearby',
-      ),
+          Icons.bluetooth_searching_rounded,
+          Colors.blue[700]!,
+          'Scanning... / खोज रहे हैं',
+          'Looking for printers nearby',
+        ),
       PrinterStatus.printing => (
-        Icons.print_rounded, Colors.orange[700]!,
-        'Printing... / प्रिंट हो रहा है', 'Please wait',
-      ),
+          Icons.print_rounded,
+          Colors.orange[700]!,
+          'Printing... / प्रिंट हो रहा है',
+          'Please wait',
+        ),
       PrinterStatus.error => (
-        Icons.error_rounded, Colors.red[700]!,
-        'Error / त्रुटि', printer.errorMessage ?? 'Unknown error',
-      ),
+          Icons.error_rounded,
+          Colors.red[700]!,
+          'Error / त्रुटि',
+          printer.errorMessage ?? 'Unknown error',
+        ),
       PrinterStatus.disconnected => (
-        Icons.print_disabled_rounded, Colors.grey[600]!,
-        'Not connected / नहीं जुड़ा', 'Scan to find printers',
-      ),
+          Icons.print_disabled_rounded,
+          Colors.grey[600]!,
+          'Not connected / नहीं जुड़ा',
+          'Scan to find printers',
+        ),
     };
 
     return Container(
@@ -266,8 +300,12 @@ class _StatusCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: color)),
-              Text(sublabel, style: TextStyle(fontSize: 13, color: color.withOpacity(0.8))),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold, color: color)),
+              Text(sublabel,
+                  style:
+                      TextStyle(fontSize: 13, color: color.withOpacity(0.8))),
             ],
           ),
         ],
@@ -285,8 +323,10 @@ class _DeviceTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DeviceTile({
-    required this.device, required this.isConnected,
-    required this.isConnecting, required this.onTap,
+    required this.device,
+    required this.isConnected,
+    required this.isConnecting,
+    required this.onTap,
   });
 
   @override
@@ -300,21 +340,27 @@ class _DeviceTile extends StatelessWidget {
           size: 28,
         ),
         title: Text(device.name,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         subtitle: Text('Signal: ${device.rssi} dBm',
-          style: const TextStyle(fontSize: 13)),
+            style: const TextStyle(fontSize: 13)),
         trailing: isConnected
-          ? const Icon(Icons.check_circle_rounded, color: Colors.green, size: 28)
-          : isConnecting
-            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-            : ElevatedButton(
-                onPressed: onTap,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                ),
-                child: const Text('Connect', style: TextStyle(color: Colors.white)),
-              ),
+            ? const Icon(Icons.check_circle_rounded,
+                color: Colors.green, size: 28)
+            : isConnecting
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : ElevatedButton(
+                    onPressed: onTap,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
+                    ),
+                    child: const Text('Connect',
+                        style: TextStyle(color: Colors.white)),
+                  ),
       ),
     );
   }

@@ -4,25 +4,28 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local/local_database.dart';
 
 class SupabaseSyncService {
-  final SupabaseClient _client;
+  final SupabaseClient? _client;
 
-  SupabaseSyncService() : _client = Supabase.instance.client;
+  SupabaseSyncService([SupabaseClient? client])
+      : _client = client ?? _safeGetClient();
 
-  bool get isSupabaseConfigured {
-    // Check if initialized with real values
+  static SupabaseClient? _safeGetClient() {
     try {
-      Supabase.instance;
-      return true;
+      return Supabase.instance.client;
     } catch (_) {
-      return false;
+      return null;
     }
   }
+
+  bool get isSupabaseConfigured => _client != null;
 
   // ── PUSH LOGIC ───────────────────────────────────────────────────
 
   Future<bool> pushParty(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
     try {
-      await _client.from('parties').upsert(_mapToSnakeCase(data));
+      await client.from('parties').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
       return false;
@@ -30,8 +33,10 @@ class SupabaseSyncService {
   }
 
   Future<bool> pushTransaction(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
     try {
-      await _client.from('transactions').upsert(_mapToSnakeCase(data));
+      await client.from('transactions').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
       return false;
@@ -39,8 +44,10 @@ class SupabaseSyncService {
   }
 
   Future<bool> pushBagMovement(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
     try {
-      await _client.from('bag_movements').upsert(_mapToSnakeCase(data));
+      await client.from('bag_movements').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
       return false;
@@ -48,17 +55,79 @@ class SupabaseSyncService {
   }
 
   Future<bool> deleteTransaction(String id) async {
+    final client = _client;
+    if (client == null) return false;
     try {
-      await _client.from('transactions').update({'is_deleted': true, 'updated_at': DateTime.now().toIso8601String()}).eq('id', id);
+      await client.from('transactions').update({
+        'is_deleted': true,
+        'updated_at': DateTime.now().toIso8601String()
+      }).eq('id', id);
       return true;
     } catch (e) {
       return false;
     }
   }
 
+  /// Soft-delete bag movement on server so other devices detect the deletion
+  /// during pull sync (mirrors the transaction soft-delete pattern).
   Future<bool> deleteBagMovement(String id) async {
+    final client = _client;
+    if (client == null) return false;
     try {
-      await _client.from('bag_movements').delete().eq('id', id);
+      await client.from('bag_movements').update({
+        'is_deleted': true,
+        'updated_at': DateTime.now().toIso8601String()
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> pushEmployee(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('employees').upsert(_mapToSnakeCase(data));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteEmployee(String id) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('employees').update({
+        'is_active': false,
+        'updated_at': DateTime.now().toIso8601String()
+      }).eq('id', id);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> pushAttendance(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('attendances').upsert(
+            _mapToSnakeCase(data),
+            onConflict: 'employee_id,attendance_date',
+          );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> pushEmployeePayment(Map<String, dynamic> data) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('employee_payments').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
       return false;
@@ -92,6 +161,19 @@ class SupabaseSyncService {
             success = await pushBagMovement(payload);
           }
           break;
+        case 'employee':
+          if (item.operation == 'delete') {
+            success = await deleteEmployee(item.entityId);
+          } else {
+            success = await pushEmployee(payload);
+          }
+          break;
+        case 'attendance':
+          success = await pushAttendance(payload);
+          break;
+        case 'employee_payment':
+          success = await pushEmployeePayment(payload);
+          break;
       }
 
       if (success) {
@@ -104,39 +186,66 @@ class SupabaseSyncService {
 
   // ── PULL LOGIC ───────────────────────────────────────────────────
 
-  Future<Map<String, List<Map<String, dynamic>>>> pullChanges(String? lastSyncTimestamp) async {
+  Future<Map<String, List<Map<String, dynamic>>>> pullChanges(
+      String? lastSyncTimestamp) async {
     final Map<String, List<Map<String, dynamic>>> results = {
       'parties': [],
       'transactions': [],
       'bag_movements': [],
+      'employees': [],
+      'attendances': [],
+      'employee_payments': [],
     };
 
+    final client = _client;
+    if (client == null) return results;
+
     try {
-      var queryParties = _client.from('parties').select();
-      var queryTxns = _client.from('transactions').select();
-      var queryBags = _client.from('bag_movements').select();
+      var queryParties = client.from('parties').select();
+      var queryTxns = client.from('transactions').select();
+      var queryBags = client.from('bag_movements').select();
+      var queryEmployees = client.from('employees').select();
+      var queryAttendances = client.from('attendances').select();
+      var queryPayments = client.from('employee_payments').select();
 
       if (lastSyncTimestamp != null) {
         queryParties = queryParties.gt('updated_at', lastSyncTimestamp);
         queryTxns = queryTxns.gt('updated_at', lastSyncTimestamp);
         queryBags = queryBags.gt('updated_at', lastSyncTimestamp);
+        queryEmployees = queryEmployees.gt('updated_at', lastSyncTimestamp);
+        queryAttendances = queryAttendances.gt('updated_at', lastSyncTimestamp);
+        queryPayments = queryPayments.gt('updated_at', lastSyncTimestamp);
       }
 
       final responses = await Future.wait([
         queryParties,
         queryTxns,
         queryBags,
+        queryEmployees,
+        queryAttendances,
+        queryPayments,
       ]);
 
       results['parties'] = List<Map<String, dynamic>>.from(responses[0]);
       results['transactions'] = List<Map<String, dynamic>>.from(responses[1]);
       results['bag_movements'] = List<Map<String, dynamic>>.from(responses[2]);
+      results['employees'] = List<Map<String, dynamic>>.from(responses[3]);
+      results['attendances'] = List<Map<String, dynamic>>.from(responses[4]);
+      results['employee_payments'] =
+          List<Map<String, dynamic>>.from(responses[5]);
 
       // Map back to camelCase for local insertion
       results['parties'] = results['parties']!.map(_mapToCamelCase).toList();
-      results['transactions'] = results['transactions']!.map(_mapToCamelCase).toList();
-      results['bag_movements'] = results['bag_movements']!.map(_mapToCamelCase).toList();
-
+      results['transactions'] =
+          results['transactions']!.map(_mapToCamelCase).toList();
+      results['bag_movements'] =
+          results['bag_movements']!.map(_mapToCamelCase).toList();
+      results['employees'] =
+          results['employees']!.map(_mapToCamelCase).toList();
+      results['attendances'] =
+          results['attendances']!.map(_mapToCamelCase).toList();
+      results['employee_payments'] =
+          results['employee_payments']!.map(_mapToCamelCase).toList();
     } catch (e) {
       // Silently fail or use a logger
     }
@@ -149,7 +258,8 @@ class SupabaseSyncService {
   Map<String, dynamic> _mapToSnakeCase(Map<String, dynamic> data) {
     final Map<String, dynamic> mapped = {};
     data.forEach((key, value) {
-      final snakeKey = key.replaceAllMapped(RegExp(r'([A-Z])'), (match) => '_${match.group(1)!.toLowerCase()}');
+      final snakeKey = key.replaceAllMapped(
+          RegExp(r'([A-Z])'), (match) => '_${match.group(1)!.toLowerCase()}');
       mapped[snakeKey] = value;
     });
     return mapped;
@@ -158,7 +268,8 @@ class SupabaseSyncService {
   Map<String, dynamic> _mapToCamelCase(Map<String, dynamic> data) {
     final Map<String, dynamic> mapped = {};
     data.forEach((key, value) {
-      final camelKey = key.replaceAllMapped(RegExp(r'_([a-z])'), (match) => match.group(1)!.toUpperCase());
+      final camelKey = key.replaceAllMapped(
+          RegExp(r'_([a-z])'), (match) => match.group(1)!.toUpperCase());
       mapped[camelKey] = value;
     });
     return mapped;

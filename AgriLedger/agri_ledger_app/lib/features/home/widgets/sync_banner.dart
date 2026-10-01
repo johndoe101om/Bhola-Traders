@@ -62,11 +62,12 @@ class SyncBanner extends ConsumerWidget {
         child: Row(
           children: [
             state.status == SyncStatus.syncing
-              ? SizedBox(
-                  width: 20, height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2, color: iconColor))
-              : Icon(icon, color: iconColor, size: 22),
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: iconColor))
+                : Icon(icon, color: iconColor, size: 22),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

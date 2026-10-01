@@ -35,7 +35,7 @@ public class BagsController : ControllerBase
             query = query.Where(b => b.Movement == movement.ToLower());
 
         if (from.HasValue) query = query.Where(b => b.EntryDate >= from.Value);
-        if (to.HasValue)   query = query.Where(b => b.EntryDate <= to.Value);
+        if (to.HasValue) query = query.Where(b => b.EntryDate <= to.Value);
 
         var total = await query.CountAsync();
 
@@ -81,7 +81,7 @@ public class BagsController : ControllerBase
                 PartyId = g.Key.PartyId,
                 PartyName = g.Key.Name,
                 Village = g.Key.Village,
-                BagsGiven    = g.Where(b => b.Movement == "given").Sum(b => b.Quantity),
+                BagsGiven = g.Where(b => b.Movement == "given").Sum(b => b.Quantity),
                 BagsReturned = g.Where(b => b.Movement == "returned").Sum(b => b.Quantity),
                 BagsOutstanding = g.Sum(b => b.Movement == "given" ? b.Quantity : -b.Quantity)
             })
@@ -118,7 +118,7 @@ public class BagsController : ControllerBase
             })
             .ToListAsync();
 
-        var totalGiven    = movements.Where(m => m.Movement == "given").Sum(m => m.Quantity);
+        var totalGiven = movements.Where(m => m.Movement == "given").Sum(m => m.Quantity);
         var totalReturned = movements.Where(m => m.Movement == "returned").Sum(m => m.Quantity);
 
         return Ok(ApiResponse<object>.Ok(new

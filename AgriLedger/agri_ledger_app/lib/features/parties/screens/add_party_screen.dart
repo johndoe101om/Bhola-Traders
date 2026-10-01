@@ -10,7 +10,7 @@ import '../../../data/repositories/providers.dart';
 class AddPartyScreen extends ConsumerStatefulWidget {
   final String? initialType;
   final PartiesTableData? party;
-  
+
   const AddPartyScreen({super.key, this.initialType, this.party});
 
   @override
@@ -57,13 +57,15 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
     try {
       final repo = ref.read(appRepositoryProvider);
-      
+
       if (widget.party == null) {
         await repo.createParty(
           name: _nameCtrl.text.trim(),
           partyType: _partyType,
           phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-          village: _villageCtrl.text.trim().isEmpty ? null : _villageCtrl.text.trim(),
+          village: _villageCtrl.text.trim().isEmpty
+              ? null
+              : _villageCtrl.text.trim(),
           notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         );
       } else {
@@ -72,13 +74,19 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
           name: _nameCtrl.text.trim(),
           partyType: _partyType,
           phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
-          village: _villageCtrl.text.trim().isEmpty ? null : _villageCtrl.text.trim(),
+          village: _villageCtrl.text.trim().isEmpty
+              ? null
+              : _villageCtrl.text.trim(),
           notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
         );
       }
 
       if (mounted) {
-        showSuccess(context, widget.party == null ? 'पार्टी बन गई / Party added!' : 'पार्टी अपडेट हो गई / Party updated!');
+        showSuccess(
+            context,
+            widget.party == null
+                ? 'पार्टी बन गई / Party added!'
+                : 'पार्टी अपडेट हो गई / Party updated!');
         Navigator.pop(context, true);
       }
     } catch (e) {
@@ -92,7 +100,10 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
   Widget build(BuildContext context) {
     final isEdit = widget.party != null;
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? 'पार्टी एडिट करें / Edit Party' : 'नई पार्टी / Add Party')),
+      appBar: AppBar(
+          title: Text(isEdit
+              ? 'पार्टी एडिट करें / Edit Party'
+              : 'नई पार्टी / Add Party')),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -100,8 +111,10 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
           children: [
             // Party type selector
             const Text('पार्टी का प्रकार / Party Type',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
-                color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 10),
             _PartyTypeSelector(
               selected: _partyType,
@@ -110,7 +123,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
             const SizedBox(height: 20),
 
             // Name
-            _FieldLabel('नाम / Name *'),
+            const _FieldLabel('नाम / Name *'),
             TextFormField(
               controller: _nameCtrl,
               textCapitalization: TextCapitalization.words,
@@ -119,12 +132,13 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                 hintText: 'जैसे: राम लाल यादव',
                 prefixIcon: Icon(Icons.person_rounded),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+              validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Name is required' : null,
             ),
             const SizedBox(height: 16),
 
             // Phone
-            _FieldLabel('मोबाइल / Phone'),
+            const _FieldLabel('मोबाइल / Phone'),
             TextFormField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
@@ -137,7 +151,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
             const SizedBox(height: 16),
 
             // Village
-            _FieldLabel('गाँव / Village'),
+            const _FieldLabel('गाँव / Village'),
             TextFormField(
               controller: _villageCtrl,
               textCapitalization: TextCapitalization.words,
@@ -150,7 +164,7 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
             const SizedBox(height: 16),
 
             // Notes
-            _FieldLabel('नोट / Notes'),
+            const _FieldLabel('नोट / Notes'),
             TextFormField(
               controller: _notesCtrl,
               maxLines: 2,
@@ -174,12 +188,19 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
                 minimumSize: const Size(double.infinity, 60),
               ),
               icon: _saving
-                ? const SizedBox(width: 20, height: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Icon(Icons.check_rounded, color: Colors.white, size: 26),
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.check_rounded,
+                      color: Colors.white, size: 26),
               label: Text(
                 _saving ? 'सेव हो रहा है...' : 'सेव करें / Save',
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700),
               ),
             ),
           ],
@@ -219,11 +240,14 @@ class _PartyTypeSelector extends StatelessWidget {
               child: Column(
                 children: [
                   Icon(partyTypeIcon(type),
-                    color: isSelected ? Colors.white : AppTheme.textSecondary, size: 28),
+                      color: isSelected ? Colors.white : AppTheme.textSecondary,
+                      size: 28),
                   const SizedBox(height: 4),
-                  Text(label.first,
+                  Text(
+                    label.first,
                     style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       color: isSelected ? Colors.white : AppTheme.textSecondary,
                     ),
                     textAlign: TextAlign.center,
@@ -247,8 +271,10 @@ class _FieldLabel extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(text,
-        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600,
-          color: AppTheme.textSecondary)),
+          style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textSecondary)),
     );
   }
 }

@@ -67,7 +67,7 @@ class VoiceService extends ChangeNotifier {
   Future<void> startListening({
     void Function(String transcript)? onResult,
     void Function(String error)? onError,
-    String locale = 'hi_IN',           // Hindi — Android on-device
+    String locale = 'hi_IN', // Hindi — Android on-device
     Duration listenFor = const Duration(seconds: 12),
     Duration pauseFor = const Duration(seconds: 3),
   }) async {
@@ -136,13 +136,13 @@ class VoiceService extends ChangeNotifier {
   }
 
   String _friendlyError(String errorMsg) => switch (errorMsg) {
-    'error_no_match'      => 'कुछ नहीं सुना / Nothing heard — try again',
-    'error_speech_timeout'=> 'कोई आवाज़ नहीं / No speech detected',
-    'error_network'       => 'इंटरनेट नहीं / Network error — use offline mode',
-    'error_audio'         => 'माइक की समस्या / Microphone error',
-    'error_not_recognized'=> 'पहचान नहीं हुई / Could not recognize speech',
-    _ => 'Voice error: $errorMsg',
-  };
+        'error_no_match' => 'कुछ नहीं सुना / Nothing heard — try again',
+        'error_speech_timeout' => 'कोई आवाज़ नहीं / No speech detected',
+        'error_network' => 'इंटरनेट नहीं / Network error — use offline mode',
+        'error_audio' => 'माइक की समस्या / Microphone error',
+        'error_not_recognized' => 'पहचान नहीं हुई / Could not recognize speech',
+        _ => 'Voice error: $errorMsg',
+      };
 
   void _setState(VoiceState s) {
     _state = s;

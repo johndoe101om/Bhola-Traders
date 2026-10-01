@@ -19,32 +19,32 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 
 class EscPos {
   // Initialize
-  static final init           = Uint8List.fromList([0x1B, 0x40]);
+  static final init = Uint8List.fromList([0x1B, 0x40]);
   // Line feed
-  static final lf             = Uint8List.fromList([0x0A]);
+  static final lf = Uint8List.fromList([0x0A]);
   // Cut paper (full)
-  static final cut            = Uint8List.fromList([0x1D, 0x56, 0x00]);
+  static final cut = Uint8List.fromList([0x1D, 0x56, 0x00]);
   // Cut paper (partial)
-  static final partialCut     = Uint8List.fromList([0x1D, 0x56, 0x01]);
+  static final partialCut = Uint8List.fromList([0x1D, 0x56, 0x01]);
   // Bold ON
-  static final boldOn         = Uint8List.fromList([0x1B, 0x45, 0x01]);
+  static final boldOn = Uint8List.fromList([0x1B, 0x45, 0x01]);
   // Bold OFF
-  static final boldOff        = Uint8List.fromList([0x1B, 0x45, 0x00]);
+  static final boldOff = Uint8List.fromList([0x1B, 0x45, 0x00]);
   // Align center
-  static final alignCenter    = Uint8List.fromList([0x1B, 0x61, 0x01]);
+  static final alignCenter = Uint8List.fromList([0x1B, 0x61, 0x01]);
   // Align left
-  static final alignLeft      = Uint8List.fromList([0x1B, 0x61, 0x00]);
+  static final alignLeft = Uint8List.fromList([0x1B, 0x61, 0x00]);
   // Align right
-  static final alignRight     = Uint8List.fromList([0x1B, 0x61, 0x02]);
+  static final alignRight = Uint8List.fromList([0x1B, 0x61, 0x02]);
   // Double height + width (large text)
-  static final textLarge      = Uint8List.fromList([0x1D, 0x21, 0x11]);
+  static final textLarge = Uint8List.fromList([0x1D, 0x21, 0x11]);
   // Normal text size
-  static final textNormal     = Uint8List.fromList([0x1D, 0x21, 0x00]);
+  static final textNormal = Uint8List.fromList([0x1D, 0x21, 0x00]);
   // Text large (height only)
-  static final textMedium     = Uint8List.fromList([0x1D, 0x21, 0x01]);
+  static final textMedium = Uint8List.fromList([0x1D, 0x21, 0x01]);
   // Divider line (32 dashes for 58mm)
   static Uint8List get divider =>
-    Uint8List.fromList('--------------------------------\n'.codeUnits);
+      Uint8List.fromList('--------------------------------\n'.codeUnits);
 
   static Uint8List text(String t) => Uint8List.fromList(t.codeUnits);
   static Uint8List line(String t) => Uint8List.fromList('$t\n'.codeUnits);
@@ -66,7 +66,8 @@ class PrinterDevice {
   final String id;
   final String name;
   final int rssi;
-  const PrinterDevice({required this.id, required this.name, required this.rssi});
+  const PrinterDevice(
+      {required this.id, required this.name, required this.rssi});
 }
 
 // ── THERMAL PRINTER SERVICE ───────────────────────────────────────────
@@ -84,20 +85,9 @@ class ThermalPrinterService extends ChangeNotifier {
   bool get isConnected => _status == PrinterStatus.connected;
   String? get connectedDeviceName => _device?.platformName;
 
-  // Common BLE write characteristic UUIDs for ESC/POS printers
-  static const _commonServiceUuids = [
-    '000018f0-0000-1000-8000-00805f9b34fb', // Common printer service
-    '0000ff00-0000-1000-8000-00805f9b34fb', // Another common UUID
-    '49535343-fe7d-4ae5-8fa9-9fafd205e455', // Microchip BT
-  ];
-  static const _commonCharUuids = [
-    '00002af1-0000-1000-8000-00805f9b34fb',
-    '0000ff02-0000-1000-8000-00805f9b34fb',
-    '49535343-8841-43f4-a8d4-ecbe34729bb3',
-  ];
-
   // ── SCAN ──────────────────────────────────────────────────────────
-  Future<void> startScan({Duration timeout = const Duration(seconds: 8)}) async {
+  Future<void> startScan(
+      {Duration timeout = const Duration(seconds: 8)}) async {
     _foundDevices = [];
     _setStatus(PrinterStatus.scanning);
 
@@ -106,15 +96,15 @@ class ThermalPrinterService extends ChangeNotifier {
 
       FlutterBluePlus.scanResults.listen((results) {
         final devices = results
-          .where((r) => r.device.platformName.isNotEmpty || r.rssi > -80)
-          .map((r) => PrinterDevice(
-            id: r.device.remoteId.str,
-            name: r.device.platformName.isEmpty
-              ? 'Unknown (${r.device.remoteId.str.substring(0, 8)})'
-              : r.device.platformName,
-            rssi: r.rssi,
-          ))
-          .toList();
+            .where((r) => r.device.platformName.isNotEmpty || r.rssi > -80)
+            .map((r) => PrinterDevice(
+                  id: r.device.remoteId.str,
+                  name: r.device.platformName.isEmpty
+                      ? 'Unknown (${r.device.remoteId.str.substring(0, 8)})'
+                      : r.device.platformName,
+                  rssi: r.rssi,
+                ))
+            .toList();
 
         _foundDevices = devices;
         notifyListeners();
@@ -190,7 +180,8 @@ class ThermalPrinterService extends ChangeNotifier {
         final end = (i + chunkSize).clamp(0, bytes.length);
         final chunk = bytes.sublist(i, end);
         await _characteristic!.write(chunk, withoutResponse: true);
-        await Future.delayed(const Duration(milliseconds: 20)); // let printer breathe
+        await Future.delayed(
+            const Duration(milliseconds: 20)); // let printer breathe
       }
       _setStatus(PrinterStatus.connected);
       return true;
@@ -334,6 +325,89 @@ class ThermalPrinterService extends ChangeNotifier {
     return _printBytes(buf.toBytes());
   }
 
+  // ──────────────────────────────────────────────────────────────────
+  // PRINT: LABOUR PAYSLIP (58mm thermal)
+  // ──────────────────────────────────────────────────────────────────
+
+  Future<bool> printPayslipThermal({
+    required String employeeName,
+    required String role,
+    required String wageType,
+    required double baseRate,
+    required String periodStr,
+    required int presentDays,
+    required int halfDays,
+    required int absentDays,
+    required double overtimeHours,
+    required double earnedWage,
+    required double cashPaid,
+    required double onlinePaid,
+    required double totalPaid,
+    required double balanceDue,
+    String businessName = 'Bhola Traders',
+  }) async {
+    final buf = BytesBuilder();
+
+    void add(Uint8List b) => buf.add(b);
+    void addLine(String s) => buf.add(EscPos.line(s));
+
+    add(EscPos.init);
+    add(EscPos.alignCenter);
+    add(EscPos.boldOn);
+    addLine(businessName);
+    add(EscPos.boldOff);
+    addLine('LABOUR PAYSLIP / MAJDURI PARCHI');
+    add(EscPos.divider);
+
+    add(EscPos.alignLeft);
+    addLine('Emp: $employeeName (${role.toUpperCase()})');
+    addLine('Rate: Rs.${baseRate.toStringAsFixed(0)} / $wageType');
+    addLine('Period: $periodStr');
+    add(EscPos.divider);
+
+    addLine('ATTENDANCE / HAJIRI:');
+    addLine(' Present:   $presentDays days');
+    if (halfDays > 0) addLine(' Half-day:  $halfDays days');
+    addLine(' Absent:    $absentDays days');
+    if (overtimeHours > 0) {
+      addLine(' Overtime:  ${overtimeHours.toStringAsFixed(1)} hrs');
+    }
+    add(EscPos.divider);
+
+    addLine('EARNINGS / KAMAI:');
+    addLine(' Gross Earned: Rs.${earnedWage.toStringAsFixed(0)}');
+    add(EscPos.divider);
+
+    addLine('PAYMENTS / BHUGTAN:');
+    if (cashPaid > 0) addLine(' Cash:   Rs.${cashPaid.toStringAsFixed(0)}');
+    if (onlinePaid > 0) addLine(' Online: Rs.${onlinePaid.toStringAsFixed(0)}');
+    addLine(' Total Paid:   Rs.${totalPaid.toStringAsFixed(0)}');
+    add(EscPos.divider);
+
+    add(EscPos.alignCenter);
+    add(EscPos.textLarge);
+    add(EscPos.boldOn);
+    addLine('Rs.${balanceDue.abs().toStringAsFixed(0)}');
+    add(EscPos.textNormal);
+    add(EscPos.boldOff);
+    addLine(balanceDue > 0
+        ? 'NET DUE (DENA HAI)'
+        : balanceDue < 0
+            ? 'ADVANCE (LE LIYA)'
+            : 'ALL CLEARED (CHUKTA)');
+    add(EscPos.divider);
+
+    add(EscPos.alignLeft);
+    add(EscPos.lf);
+    addLine('Sign / Hastakshar: ________________');
+    addLine(DateTime.now().toLocal().toString().substring(0, 16));
+    add(EscPos.lf);
+    add(EscPos.lf);
+    add(EscPos.partialCut);
+
+    return _printBytes(buf.toBytes());
+  }
+
   // ── HELPERS ───────────────────────────────────────────────────────
 
   void _setStatus(PrinterStatus s) {
@@ -342,16 +416,19 @@ class ThermalPrinterService extends ChangeNotifier {
   }
 
   String _txnLabel(String type) => switch (type) {
-    'purchase' => 'KHARIDI / PURCHASE',
-    'sale'     => 'BIKRI / SALE',
-    'cash_in'  => 'PAISA MILA / CASH IN',
-    'cash_out' => 'PAISA DIYA / CASH OUT',
-    _ => type.toUpperCase(),
-  };
+        'purchase' => 'KHARIDI / PURCHASE',
+        'sale' => 'BIKRI / SALE',
+        'cash_in' => 'PAISA MILA / CASH IN',
+        'cash_out' => 'PAISA DIYA / CASH OUT',
+        _ => type.toUpperCase(),
+      };
 
   String _commodityEmoji(String c) => switch (c) {
-    'rice' => '[Rice]', 'wheat' => '[Gehu]', 'maize' => '[Makka]', _ => '',
-  };
+        'rice' => '[Rice]',
+        'wheat' => '[Gehu]',
+        'maize' => '[Makka]',
+        _ => '',
+      };
 
   @override
   void dispose() {

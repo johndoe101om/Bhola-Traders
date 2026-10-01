@@ -10,6 +10,7 @@ import '../../../data/local/local_database.dart';
 class EntryScreen extends ConsumerStatefulWidget {
   final String? initialTxnType;
   final String? preselectedPartyId;
+
   /// If provided, the screen operates in edit mode for this transaction.
   final TransactionsTableData? transaction;
 
@@ -52,8 +53,12 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
       _paymentMode = txn.paymentMode;
       _amountCtrl.text = txn.amount.toStringAsFixed(0);
       _notesCtrl.text = txn.notes ?? '';
-      if (txn.quantityKg != null) _quantityCtrl.text = txn.quantityKg.toString();
-      if (txn.ratePerKg != null) _rateCtrl.text = txn.ratePerKg!.toStringAsFixed(0);
+      if (txn.quantityKg != null) {
+        _quantityCtrl.text = txn.quantityKg.toString();
+      }
+      if (txn.ratePerKg != null) {
+        _rateCtrl.text = txn.ratePerKg!.toStringAsFixed(0);
+      }
       _entryDate = DateTime.tryParse(txn.entryDate) ?? DateTime.now();
       _loadPartyForEdit(txn.partyId);
     } else {
@@ -178,7 +183,9 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
         }
       }
     } catch (e) {
-      if (mounted) showError(context, 'An error occurred processing your request');
+      if (mounted) {
+        showError(context, 'An error occurred processing your request');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -189,19 +196,24 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
     final ok = await confirmDialog(
       context,
       title: 'एंट्री हटाएं? / Delete Entry?',
-      message: 'क्या आप इस एंट्री को हटाना चाहते हैं?\nAre you sure you want to delete this entry?',
+      message:
+          'क्या आप इस एंट्री को हटाना चाहते हैं?\nAre you sure you want to delete this entry?',
     );
     if (!ok) return;
 
     setState(() => _saving = true);
     try {
-      await ref.read(appRepositoryProvider).deleteTransaction(widget.transaction!.id);
+      await ref
+          .read(appRepositoryProvider)
+          .deleteTransaction(widget.transaction!.id);
       if (mounted) {
         showSuccess(context, 'एंट्री हटा दी गई / Entry deleted!');
         Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) showError(context, 'An error occurred processing your request');
+      if (mounted) {
+        showError(context, 'An error occurred processing your request');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -211,7 +223,8 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit ? 'एंट्री बदलें / Edit Entry' : 'नई एंट्री / New Entry'),
+        title: Text(
+            _isEdit ? 'एंट्री बदलें / Edit Entry' : 'नई एंट्री / New Entry'),
         actions: [
           if (_isEdit)
             IconButton(
@@ -226,30 +239,33 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
           children: [
-
             // ── TXN TYPE ───────────────────────────────────────────
-            _SectionLabel('एंट्री का प्रकार / Entry Type'),
+            const _SectionLabel('एंट्री का प्रकार / Entry Type'),
             _TxnTypeSelector(selected: _txnType, onChanged: _onTxnTypeChanged),
             const SizedBox(height: 20),
 
             // ── PARTY SELECTOR ─────────────────────────────────────
-            _SectionLabel('पार्टी / Party *'),
+            const _SectionLabel('पार्टी / Party *'),
             GestureDetector(
               onTap: _pickParty,
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  border: Border.all(color: _selectedParty == null ? Colors.red : AppTheme.divider),
+                  border: Border.all(
+                      color: _selectedParty == null
+                          ? Colors.red
+                          : AppTheme.divider),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       _selectedParty != null
-                        ? partyTypeIcon(_selectedParty!.partyType)
-                        : Icons.person_search_rounded,
-                      color: AppTheme.primary, size: 28,
+                          ? partyTypeIcon(_selectedParty!.partyType)
+                          : Icons.person_search_rounded,
+                      color: AppTheme.primary,
+                      size: 28,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -257,12 +273,17 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                         _selectedParty?.name ?? 'पार्टी चुनें / Select Party',
                         style: TextStyle(
                           fontSize: 18,
-                          color: _selectedParty != null ? AppTheme.textPrimary : AppTheme.textHint,
-                          fontWeight: _selectedParty != null ? FontWeight.w600 : FontWeight.normal,
+                          color: _selectedParty != null
+                              ? AppTheme.textPrimary
+                              : AppTheme.textHint,
+                          fontWeight: _selectedParty != null
+                              ? FontWeight.w600
+                              : FontWeight.normal,
                         ),
                       ),
                     ),
-                    const Icon(Icons.arrow_drop_down_rounded, color: AppTheme.textSecondary),
+                    const Icon(Icons.arrow_drop_down_rounded,
+                        color: AppTheme.textSecondary),
                   ],
                 ),
               ),
@@ -271,7 +292,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
             // ── COMMODITY (grain only) ─────────────────────────────
             if (_isGrainTxn) ...[
-              _SectionLabel('अनाज / Commodity'),
+              const _SectionLabel('अनाज / Commodity'),
               _CommoditySelector(
                 selected: _commodity,
                 onChanged: (c) => setState(() => _commodity = c),
@@ -287,10 +308,11 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SectionLabel('वजन (KG)'),
+                        const _SectionLabel('वजन (KG)'),
                         TextFormField(
                           controller: _quantityCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           style: const TextStyle(fontSize: 20),
                           decoration: const InputDecoration(
                             hintText: '0.0',
@@ -306,10 +328,11 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _SectionLabel('रेट / Rate'),
+                        const _SectionLabel('रेट / Rate'),
                         TextFormField(
                           controller: _rateCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           style: const TextStyle(fontSize: 20),
                           decoration: const InputDecoration(
                             hintText: '0',
@@ -327,24 +350,29 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
             ],
 
             // ── AMOUNT ─────────────────────────────────────────────
-            _SectionLabel('रकम (₹) / Amount *'),
+            const _SectionLabel('रकम (₹) / Amount *'),
             TextFormField(
               controller: _amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 hintText: '0',
                 prefixText: '₹ ',
-                prefixStyle: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppTheme.primary),
+                prefixStyle: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primary),
                 filled: true,
                 fillColor: AppTheme.primary.withOpacity(0.05),
               ),
-              validator: (v) => (v == null || v.isEmpty) ? 'Amount required' : null,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Amount required' : null,
             ),
             const SizedBox(height: 16),
 
             // ── PAYMENT MODE ───────────────────────────────────────
-            _SectionLabel('भुगतान / Payment Mode'),
+            const _SectionLabel('भुगतान / Payment Mode'),
             _PaymentModeSelector(
               selected: _paymentMode,
               onChanged: (m) => setState(() => _paymentMode = m),
@@ -352,7 +380,7 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
             const SizedBox(height: 16),
 
             // ── DATE ───────────────────────────────────────────────
-            _SectionLabel('तारीख / Date'),
+            const _SectionLabel('तारीख / Date'),
             GestureDetector(
               onTap: _pickDate,
               child: Container(
@@ -364,11 +392,14 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded, color: AppTheme.primary),
+                    const Icon(Icons.calendar_today_rounded,
+                        color: AppTheme.primary),
                     const SizedBox(width: 12),
-                    Text(formatDate(_entryDate), style: const TextStyle(fontSize: 18)),
+                    Text(formatDate(_entryDate),
+                        style: const TextStyle(fontSize: 18)),
                     const Spacer(),
-                    const Icon(Icons.edit_calendar_rounded, color: AppTheme.textHint),
+                    const Icon(Icons.edit_calendar_rounded,
+                        color: AppTheme.textHint),
                   ],
                 ),
               ),
@@ -376,12 +407,13 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
             const SizedBox(height: 16),
 
             // ── NOTES ──────────────────────────────────────────────
-            _SectionLabel('नोट / Notes'),
+            const _SectionLabel('नोट / Notes'),
             TextFormField(
               controller: _notesCtrl,
               maxLines: 2,
               style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(hintText: 'कोई जरूरी जानकारी / Any extra info'),
+              decoration: const InputDecoration(
+                  hintText: 'कोई जरूरी जानकारी / Any extra info'),
             ),
 
             // ── TIMESTAMP (edit mode only) ─────────────────────────
@@ -399,22 +431,26 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.textSecondary),
+                        const Icon(Icons.access_time_rounded,
+                            size: 16, color: AppTheme.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           'बनाया गया / Created: ${_formatTxnTimestamp(widget.transaction!.createdAt)}',
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.update_rounded, size: 16, color: AppTheme.textSecondary),
+                        const Icon(Icons.update_rounded,
+                            size: 16, color: AppTheme.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           'अपडेट / Updated: ${_formatTxnTimestamp(widget.transaction!.updatedAt)}',
-                          style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                          style: const TextStyle(
+                              fontSize: 12, color: AppTheme.textSecondary),
                         ),
                       ],
                     ),
@@ -431,17 +467,24 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: txnColor(_txnType),
                 minimumSize: const Size(double.infinity, 64),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
               ),
               icon: _saving
-                ? const SizedBox(width: 24, height: 24,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Icon(txnIcon(_txnType), color: Colors.white, size: 28),
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : Icon(txnIcon(_txnType), color: Colors.white, size: 28),
               label: Text(
                 _saving
-                  ? 'सेव हो रहा है...'
-                  : (_isEdit ? 'अपडेट करें / Update' : 'सेव करें / Save'),
-                style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                    ? 'सेव हो रहा है...'
+                    : (_isEdit ? 'अपडेट करें / Update' : 'सेव करें / Save'),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -466,7 +509,7 @@ class _TxnTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final types = AppConstants.txnTypes;
+    const types = AppConstants.txnTypes;
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -484,21 +527,36 @@ class _TxnTypeSelector extends StatelessWidget {
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
               color: isSelected ? color : color.withOpacity(0.08),
-              border: Border.all(color: isSelected ? color : color.withOpacity(0.3), width: 1.5),
+              border: Border.all(
+                  color: isSelected ? color : color.withOpacity(0.3),
+                  width: 1.5),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(txnIcon(type), color: isSelected ? Colors.white : color, size: 22),
-                const SizedBox(width: 8),
-                Text(lines.join('\n'),
-                  style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w700, height: 1.3,
-                    color: isSelected ? Colors.white : color,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(txnIcon(type),
+                      color: isSelected ? Colors.white : color, size: 20),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        lines.join('\n'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                          color: isSelected ? Colors.white : color,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -540,9 +598,11 @@ class _CommoditySelector extends StatelessWidget {
                 children: [
                   Text(emoji, style: const TextStyle(fontSize: 24)),
                   const SizedBox(height: 4),
-                  Text(label.last,
+                  Text(
+                    label.last,
                     style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
                       color: isSelected ? Colors.white : AppTheme.textPrimary,
                     ),
                   ),
@@ -577,17 +637,21 @@ class _PaymentModeSelector extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 4),
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary.withOpacity(0.15) : Colors.white,
+                color: isSelected
+                    ? AppTheme.primary.withOpacity(0.15)
+                    : Colors.white,
                 border: Border.all(
                   color: isSelected ? AppTheme.primary : AppTheme.divider,
                   width: isSelected ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(label,
+              child: Text(
+                label,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
                   color: isSelected ? AppTheme.primary : AppTheme.textSecondary,
                 ),
               ),
@@ -615,11 +679,12 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final filtered = _q.isEmpty
-      ? widget.parties
-      : widget.parties.where((p) =>
-          p.name.toLowerCase().contains(_q.toLowerCase()) ||
-          (p.village?.toLowerCase().contains(_q.toLowerCase()) ?? false)
-        ).toList();
+        ? widget.parties
+        : widget.parties
+            .where((p) =>
+                p.name.toLowerCase().contains(_q.toLowerCase()) ||
+                (p.village?.toLowerCase().contains(_q.toLowerCase()) ?? false))
+            .toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -633,8 +698,12 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
         child: Column(
           children: [
             const SizedBox(height: 12),
-            Container(width: 40, height: 4,
-              decoration: BoxDecoration(color: AppTheme.divider, borderRadius: BorderRadius.circular(2))),
+            Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                    color: AppTheme.divider,
+                    borderRadius: BorderRadius.circular(2))),
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
@@ -654,8 +723,11 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
                 itemBuilder: (_, i) {
                   final p = filtered[i];
                   return ListTile(
-                    leading: Icon(partyTypeIcon(p.partyType), color: AppTheme.primary),
-                    title: Text(p.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+                    leading: Icon(partyTypeIcon(p.partyType),
+                        color: AppTheme.primary),
+                    title: Text(p.name,
+                        style: const TextStyle(
+                            fontSize: 17, fontWeight: FontWeight.w700)),
                     subtitle: p.village != null ? Text(p.village!) : null,
                     onTap: () => Navigator.pop(context, p),
                   );
@@ -675,9 +747,11 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(text,
-      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700,
-        color: AppTheme.textSecondary)),
-  );
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textSecondary)),
+      );
 }

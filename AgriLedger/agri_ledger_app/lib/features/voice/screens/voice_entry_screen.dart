@@ -28,7 +28,6 @@ class VoiceEntryScreen extends ConsumerStatefulWidget {
 
 class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
     with SingleTickerProviderStateMixin {
-
   late final VoiceService _voice;
   late final AnimationController _pulseCtrl;
 
@@ -52,7 +51,8 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
     super.initState();
     _voice = VoiceService();
     _pulseCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 1200),
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
     _voice.addListener(_onVoiceStateChange);
     _voice.initialize();
@@ -78,9 +78,15 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
       // Pre-fill editable fields
       _txnType = parsed.txnType ?? 'purchase';
       _commodity = parsed.commodity;
-      if (parsed.quantityKg != null) _qtyCtrl.text = parsed.quantityKg!.toStringAsFixed(1);
-      if (parsed.ratePerKg != null) _rateCtrl.text = parsed.ratePerKg!.toStringAsFixed(0);
-      if (parsed.amount != null) _amountCtrl.text = parsed.amount!.toStringAsFixed(0);
+      if (parsed.quantityKg != null) {
+        _qtyCtrl.text = parsed.quantityKg!.toStringAsFixed(1);
+      }
+      if (parsed.ratePerKg != null) {
+        _rateCtrl.text = parsed.ratePerKg!.toStringAsFixed(0);
+      }
+      if (parsed.amount != null) {
+        _amountCtrl.text = parsed.amount!.toStringAsFixed(0);
+      }
       if (parsed.bagCount != null) {
         _bagCtrl.text = parsed.bagCount.toString();
         // If the primary type is a bag type, also prefill qtyCtrl for backward compatibility in the form logic
@@ -116,7 +122,11 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
   }
 
   Future<void> _startListening() async {
-    setState(() { _showConfirmation = false; _parsed = null; _liveTranscript = ''; });
+    setState(() {
+      _showConfirmation = false;
+      _parsed = null;
+      _liveTranscript = '';
+    });
     await _voice.startListening(
       locale: 'hi_IN',
       onResult: (t) => debugPrint('[Voice] Final: $t'),
@@ -142,10 +152,14 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
           setState(() => _selectedParty = created);
         }
       } catch (e) {
-        if (mounted) showError(context, 'पार्टी बनाने में दिक्कत / Could not create party');
+        if (mounted) {
+          showError(
+              context, 'पार्टी बनाने में दिक्कत / Could not create party');
+        }
         return;
       }
     }
+    if (!mounted) return;
     if (_selectedParty == null) {
       showError(context, 'पार्टी चुनें / Select a party first');
       return;
@@ -191,7 +205,10 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
         // Also create a bag movement if a bag count was provided!
         final bagCount = int.tryParse(_bagCtrl.text) ?? 0;
         if (bagCount > 0) {
-          final bagDirection = (_txnType == 'cash_out' || _txnType == 'purchase') ? 'given' : 'returned';
+          final bagDirection =
+              (_txnType == 'cash_out' || _txnType == 'purchase')
+                  ? 'given'
+                  : 'returned';
           await repo.createBagMovement(
             partyId: _selectedParty!.id,
             movement: bagDirection,
@@ -217,10 +234,11 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
   void _openManualForm() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => EntryScreen(
-        initialTxnType: _txnType,
-        preselectedPartyId: _selectedParty?.id,
-      )),
+      MaterialPageRoute(
+          builder: (_) => EntryScreen(
+                initialTxnType: _txnType,
+                preselectedPartyId: _selectedParty?.id,
+              )),
     );
   }
 
@@ -249,40 +267,42 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text('आवाज़ से एंट्री / Voice Entry',
-          style: TextStyle(color: Colors.white, fontSize: 18)),
+            style: TextStyle(color: Colors.white, fontSize: 18)),
         actions: [
           TextButton.icon(
             onPressed: _openManualForm,
-            icon: const Icon(Icons.edit_rounded, color: Colors.white70, size: 18),
-            label: const Text('Manual', style: TextStyle(color: Colors.white70)),
+            icon:
+                const Icon(Icons.edit_rounded, color: Colors.white70, size: 18),
+            label:
+                const Text('Manual', style: TextStyle(color: Colors.white70)),
           ),
         ],
       ),
       body: _showConfirmation && _parsed != null
-        ? _ConfirmationPanel(
-            parsed: _parsed!,
-            selectedParty: _selectedParty,
-            txnType: _txnType,
-            commodity: _commodity,
-            qtyCtrl: _qtyCtrl,
-            rateCtrl: _rateCtrl,
-            amountCtrl: _amountCtrl,
-            bagCtrl: _bagCtrl,
-            notesCtrl: _notesCtrl,
-            saving: _saving,
-            onPartyTap: _pickParty,
-            onTxnTypeChanged: (t) => setState(() => _txnType = t),
-            onCommodityChanged: (c) => setState(() => _commodity = c),
-            onSave: _save,
-            onRetry: _startListening,
-          )
-        : _ListeningPanel(
-            voice: _voice,
-            liveTranscript: _liveTranscript,
-            pulseCtrl: _pulseCtrl,
-            onStart: _startListening,
-            onStop: _stopListening,
-          ),
+          ? _ConfirmationPanel(
+              parsed: _parsed!,
+              selectedParty: _selectedParty,
+              txnType: _txnType,
+              commodity: _commodity,
+              qtyCtrl: _qtyCtrl,
+              rateCtrl: _rateCtrl,
+              amountCtrl: _amountCtrl,
+              bagCtrl: _bagCtrl,
+              notesCtrl: _notesCtrl,
+              saving: _saving,
+              onPartyTap: _pickParty,
+              onTxnTypeChanged: (t) => setState(() => _txnType = t),
+              onCommodityChanged: (c) => setState(() => _commodity = c),
+              onSave: _save,
+              onRetry: _startListening,
+            )
+          : _ListeningPanel(
+              voice: _voice,
+              liveTranscript: _liveTranscript,
+              pulseCtrl: _pulseCtrl,
+              onStart: _startListening,
+              onStop: _stopListening,
+            ),
     );
   }
 
@@ -308,7 +328,10 @@ class _VoiceEntryScreenState extends ConsumerState<VoiceEntryScreen>
             setState(() => _selectedParty = created);
           }
         } catch (e) {
-          if (mounted) showError(context, 'पार्टी बनाने में दिक्कत / Error creating party');
+          if (mounted) {
+            showError(
+                context, 'पार्टी बनाने में दिक्कत / Error creating party');
+          }
         }
       } else {
         setState(() => _selectedParty = picked);
@@ -329,8 +352,11 @@ class _ListeningPanel extends StatelessWidget {
   final VoidCallback onStop;
 
   const _ListeningPanel({
-    required this.voice, required this.liveTranscript,
-    required this.pulseCtrl, required this.onStart, required this.onStop,
+    required this.voice,
+    required this.liveTranscript,
+    required this.pulseCtrl,
+    required this.onStart,
+    required this.onStop,
   });
 
   @override
@@ -342,10 +368,10 @@ class _ListeningPanel extends StatelessWidget {
         const Spacer(),
 
         // Example prompts
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 32),
           child: Column(
-            children: const [
+            children: [
               _ExamplePrompt('🌾 "राम लाल से 200 किलो चावल 22 रुपये खरीदा"'),
               SizedBox(height: 8),
               _ExamplePrompt('💰 "Sharma ko 5000 rupees diya"'),
@@ -368,7 +394,8 @@ class _ListeningPanel extends StatelessWidget {
             ),
             child: Text(
               liveTranscript,
-              style: const TextStyle(color: Colors.white, fontSize: 18, height: 1.4),
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 18, height: 1.4),
               textAlign: TextAlign.center,
             ),
           ),
@@ -379,8 +406,8 @@ class _ListeningPanel extends StatelessWidget {
         SizedBox(
           height: 60,
           child: isListening
-            ? VoiceWaveform(animation: pulseCtrl)
-            : const SizedBox.shrink(),
+              ? VoiceWaveform(animation: pulseCtrl)
+              : const SizedBox.shrink(),
         ),
 
         const SizedBox(height: 24),
@@ -391,30 +418,31 @@ class _ListeningPanel extends StatelessWidget {
           child: AnimatedBuilder(
             animation: pulseCtrl,
             builder: (_, child) {
-              final scale = isListening
-                ? 1.0 + pulseCtrl.value * 0.12
-                : 1.0;
+              final scale = isListening ? 1.0 + pulseCtrl.value * 0.12 : 1.0;
               return Transform.scale(
                 scale: scale,
                 child: child,
               );
             },
             child: Container(
-              width: 100, height: 100,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isListening ? Colors.red : AppTheme.primaryLight,
                 boxShadow: [
                   BoxShadow(
                     color: (isListening ? Colors.red : AppTheme.primaryLight)
-                      .withOpacity(0.4),
-                    blurRadius: 24, spreadRadius: 8,
+                        .withOpacity(0.4),
+                    blurRadius: 24,
+                    spreadRadius: 8,
                   ),
                 ],
               ),
               child: Icon(
                 isListening ? Icons.stop_rounded : Icons.mic_rounded,
-                color: Colors.white, size: 48,
+                color: Colors.white,
+                size: 48,
               ),
             ),
           ),
@@ -424,11 +452,12 @@ class _ListeningPanel extends StatelessWidget {
 
         Text(
           isListening
-            ? 'सुन रहे हैं... / Listening...'
-            : 'माइक दबाएं / Tap to speak',
+              ? 'सुन रहे हैं... / Listening...'
+              : 'माइक दबाएं / Tap to speak',
           style: TextStyle(
             color: isListening ? Colors.red[300] : Colors.white60,
-            fontSize: 18, fontWeight: FontWeight.w600,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
           ),
         ),
 
@@ -470,13 +499,21 @@ class _ConfirmationPanel extends StatelessWidget {
   final VoidCallback onRetry;
 
   const _ConfirmationPanel({
-    required this.parsed, required this.selectedParty,
-    required this.txnType, required this.commodity,
-    required this.qtyCtrl, required this.rateCtrl,
-    required this.amountCtrl, required this.bagCtrl, required this.notesCtrl,
+    required this.parsed,
+    required this.selectedParty,
+    required this.txnType,
+    required this.commodity,
+    required this.qtyCtrl,
+    required this.rateCtrl,
+    required this.amountCtrl,
+    required this.bagCtrl,
+    required this.notesCtrl,
     required this.saving,
-    required this.onPartyTap, required this.onTxnTypeChanged,
-    required this.onCommodityChanged, required this.onSave, required this.onRetry,
+    required this.onPartyTap,
+    required this.onTxnTypeChanged,
+    required this.onCommodityChanged,
+    required this.onSave,
+    required this.onRetry,
   });
 
   @override
@@ -497,8 +534,10 @@ class _ConfirmationPanel extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 100),
               children: [
                 const Text('सही करें / Confirm & Edit',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary)),
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary)),
                 const SizedBox(height: 16),
 
                 // Party
@@ -510,27 +549,37 @@ class _ConfirmationPanel extends StatelessWidget {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: selectedParty != null
-                          ? AppTheme.primary.withOpacity(0.08)
-                          : Colors.red[50],
+                            ? AppTheme.primary.withOpacity(0.08)
+                            : Colors.red[50],
                         border: Border.all(
-                          color: selectedParty != null ? AppTheme.primary : Colors.red,
+                          color: selectedParty != null
+                              ? AppTheme.primary
+                              : Colors.red,
                         ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
                         children: [
                           Icon(Icons.person_rounded,
-                            color: selectedParty != null ? AppTheme.primary : Colors.red,
-                            size: 20),
+                              color: selectedParty != null
+                                  ? AppTheme.primary
+                                  : Colors.red,
+                              size: 20),
                           const SizedBox(width: 8),
-                          Expanded(child: Text(
-                            selectedParty?.name ?? (parsed.partyName ?? 'पार्टी चुनें ↓'),
+                          Expanded(
+                              child: Text(
+                            selectedParty?.name ??
+                                (parsed.partyName ?? 'पार्टी चुनें ↓'),
                             style: TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.w700,
-                              color: selectedParty != null ? AppTheme.textPrimary : Colors.red,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: selectedParty != null
+                                  ? AppTheme.textPrimary
+                                  : Colors.red,
                             ),
                           )),
-                          const Icon(Icons.edit_rounded, size: 16, color: AppTheme.textHint),
+                          const Icon(Icons.edit_rounded,
+                              size: 16, color: AppTheme.textHint),
                         ],
                       ),
                     ),
@@ -544,33 +593,44 @@ class _ConfirmationPanel extends StatelessWidget {
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: [...AppConstants.txnTypes, 'bag_given', 'bag_returned'].map((t) {
+                      children: [
+                        ...AppConstants.txnTypes,
+                        'bag_given',
+                        'bag_returned'
+                      ].map((t) {
                         final isSelected = t == txnType;
                         final color = t == 'bag_given' || t == 'bag_returned'
-                          ? AppTheme.bagColor
-                          : txnColor(t);
+                            ? AppTheme.bagColor
+                            : txnColor(t);
                         final String label;
                         if (t == 'bag_given') {
                           label = 'बोरी दी / Bag Given';
                         } else if (t == 'bag_returned') {
                           label = 'बोरी वापस / Bag Return';
                         } else {
-                          label = AppConstants.txnTypeLabels[t]?.split('\n').last ?? t;
+                          label =
+                              AppConstants.txnTypeLabels[t]?.split('\n').last ??
+                                  t;
                         }
                         return GestureDetector(
                           onTap: () => onTxnTypeChanged(t),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
                             margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 8),
                             decoration: BoxDecoration(
-                              color: isSelected ? color : color.withOpacity(0.08),
+                              color:
+                                  isSelected ? color : color.withOpacity(0.08),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: color, width: isSelected ? 2 : 1),
+                              border: Border.all(
+                                  color: color, width: isSelected ? 2 : 1),
                             ),
-                            child: Text(label,
+                            child: Text(
+                              label,
                               style: TextStyle(
-                                fontSize: 14, fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
                                 color: isSelected ? Colors.white : color,
                               ),
                             ),
@@ -589,8 +649,10 @@ class _ConfirmationPanel extends StatelessWidget {
                     child: TextField(
                       controller: qtyCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold,
-                        color: AppTheme.bagColor),
+                      style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.bagColor),
                       decoration: const InputDecoration(
                         hintText: '0',
                         suffixText: 'बोरी / Bags',
@@ -604,13 +666,18 @@ class _ConfirmationPanel extends StatelessWidget {
                     label: 'रकम / Amount ₹',
                     child: TextField(
                       controller: amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold,
-                        color: AppTheme.primary),
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.primary),
                       decoration: const InputDecoration(
                         prefixText: '₹ ',
-                        prefixStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.bold,
-                          color: AppTheme.primary),
+                        prefixStyle: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary),
                       ),
                     ),
                   ),
@@ -620,8 +687,10 @@ class _ConfirmationPanel extends StatelessWidget {
                     child: TextField(
                       controller: bagCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
-                        color: AppTheme.bagColor),
+                      style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.bagColor),
                       decoration: const InputDecoration(
                         hintText: '0',
                         suffixText: 'बोरी / Bags',
@@ -636,7 +705,8 @@ class _ConfirmationPanel extends StatelessWidget {
                 if (txnType == 'purchase' || txnType == 'sale') ...[
                   Row(
                     children: [
-                      Expanded(child: _ConfirmRow(
+                      Expanded(
+                          child: _ConfirmRow(
                         label: 'वजन / KG',
                         child: TextField(
                           controller: qtyCtrl,
@@ -646,7 +716,8 @@ class _ConfirmationPanel extends StatelessWidget {
                         ),
                       )),
                       const SizedBox(width: 12),
-                      Expanded(child: _ConfirmRow(
+                      Expanded(
+                          child: _ConfirmRow(
                         label: 'रेट / Rate',
                         child: TextField(
                           controller: rateCtrl,
@@ -686,8 +757,9 @@ class _ConfirmationPanel extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.mic_rounded),
-                  label: const Text('फिर बोलें\nRetry', textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, height: 1.2)),
+                  label: const Text('फिर बोलें\nRetry',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, height: 1.2)),
                   style: OutlinedButton.styleFrom(
                     minimumSize: const Size(0, 56),
                     side: const BorderSide(color: AppTheme.primary),
@@ -703,16 +775,23 @@ class _ConfirmationPanel extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     minimumSize: const Size(0, 56),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   icon: saving
-                    ? const SizedBox(width: 20, height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.check_rounded, color: Colors.white, size: 24),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : const Icon(Icons.check_rounded,
+                          color: Colors.white, size: 24),
                   label: Text(
                     saving ? 'सेव हो रहा है...' : 'सेव करें / Save',
-                    style: const TextStyle(color: Colors.white, fontSize: 18,
-                      fontWeight: FontWeight.w800),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -731,14 +810,17 @@ class _ConfirmRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-        color: AppTheme.textSecondary)),
-      const SizedBox(height: 6),
-      child,
-    ],
-  );
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textSecondary)),
+          const SizedBox(height: 6),
+          child,
+        ],
+      );
 }
 
 class _ExamplePrompt extends StatelessWidget {
@@ -747,14 +829,15 @@ class _ExamplePrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    decoration: BoxDecoration(
-      color: Colors.white.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Text(text,
-      style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.3)),
-  );
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(text,
+            style: const TextStyle(
+                color: Colors.white70, fontSize: 14, height: 1.3)),
+      );
 }
 
 class _PartyPickerSheet extends StatefulWidget {
@@ -771,9 +854,10 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
   @override
   Widget build(BuildContext context) {
     final filtered = _q.isEmpty
-      ? widget.parties
-      : widget.parties.where((p) =>
-          p.name.toLowerCase().contains(_q.toLowerCase())).toList();
+        ? widget.parties
+        : widget.parties
+            .where((p) => p.name.toLowerCase().contains(_q.toLowerCase()))
+            .toList();
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
@@ -784,9 +868,12 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4,
-            decoration: BoxDecoration(color: AppTheme.divider,
-              borderRadius: BorderRadius.circular(2))),
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: AppTheme.divider,
+                  borderRadius: BorderRadius.circular(2))),
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
@@ -802,31 +889,40 @@ class _PartyPickerSheetState extends State<_PartyPickerSheet> {
           // Show "Create New" option when search text doesn't match any party
           if (_q.trim().isNotEmpty && filtered.isEmpty)
             ListTile(
-              leading: const Icon(Icons.person_add_rounded, color: AppTheme.primary),
+              leading:
+                  const Icon(Icons.person_add_rounded, color: AppTheme.primary),
               title: Text('"$_q" नई पार्टी बनाएं / Create "$_q"',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700,
-                  color: AppTheme.primary)),
+                  style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.primary)),
               subtitle: const Text('New party will be added as Farmer'),
               onTap: () {
                 // Return null — the caller will handle creating via the name
-                Navigator.pop(context, PartiesTableData(
-                  id: '__NEW__',
-                  name: _q.trim(),
-                  partyType: 'farmer',
-                  isActive: true,
-                  createdAt: DateTime.now().toIso8601String(),
-                  updatedAt: DateTime.now().toIso8601String(),
-                ));
+                Navigator.pop(
+                    context,
+                    PartiesTableData(
+                      id: '__NEW__',
+                      name: _q.trim(),
+                      partyType: 'farmer',
+                      isActive: true,
+                      createdAt: DateTime.now().toIso8601String(),
+                      updatedAt: DateTime.now().toIso8601String(),
+                    ));
               },
             ),
           Expanded(
             child: ListView.builder(
               itemCount: filtered.length,
               itemBuilder: (_, i) => ListTile(
-                leading: Icon(partyTypeIcon(filtered[i].partyType), color: AppTheme.primary),
+                leading: Icon(partyTypeIcon(filtered[i].partyType),
+                    color: AppTheme.primary),
                 title: Text(filtered[i].name,
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-                subtitle: filtered[i].village != null ? Text(filtered[i].village!) : null,
+                    style: const TextStyle(
+                        fontSize: 17, fontWeight: FontWeight.w700)),
+                subtitle: filtered[i].village != null
+                    ? Text(filtered[i].village!)
+                    : null,
                 onTap: () => Navigator.pop(context, filtered[i]),
               ),
             ),

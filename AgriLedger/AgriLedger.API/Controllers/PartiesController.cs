@@ -37,23 +37,31 @@ public class PartiesController : ControllerBase
                 (p.Village != null && EF.Functions.Like(p.Village, $"%{q}%")) ||
                 (p.Phone != null && p.Phone.Contains(q)));
 
-        var parties = await query
+        var rawParties = await query
             .OrderBy(p => p.Name)
-            .Select(p => new PartyListItem
+            .Select(p => new
             {
-                Id = p.Id,
-                Name = p.Name,
-                PartyType = p.PartyType,
-                Phone = p.Phone,
-                Village = p.Village,
-                Balance = p.Transactions
-                    .Where(t => !t.IsDeleted)
-                    .Sum(t => t.Direction == "in" ? t.Amount : -t.Amount),
-                BagsOutstanding = p.BagMovements
-                    .Sum(b => b.Movement == "given" ? b.Quantity : -b.Quantity),
-                TotalTransactions = p.Transactions.Count(t => !t.IsDeleted)
+                p.Id,
+                p.Name,
+                p.PartyType,
+                p.Phone,
+                p.Village,
+                Txns = p.Transactions.Where(t => !t.IsDeleted).Select(t => new { t.Amount, t.Direction }).ToList(),
+                Bags = p.BagMovements.Select(b => new { b.Quantity, b.Movement }).ToList()
             })
             .ToListAsync();
+
+        var parties = rawParties.Select(p => new PartyListItem
+        {
+            Id = p.Id,
+            Name = p.Name,
+            PartyType = p.PartyType,
+            Phone = p.Phone,
+            Village = p.Village,
+            Balance = p.Txns.Sum(t => t.Direction == "in" ? t.Amount : -t.Amount),
+            BagsOutstanding = p.Bags.Sum(b => b.Movement == "given" ? b.Quantity : -b.Quantity),
+            TotalTransactions = p.Txns.Count
+        }).ToList();
 
         return Ok(ApiResponse<List<PartyListItem>>.Ok(parties));
     }
@@ -95,7 +103,7 @@ public class PartiesController : ControllerBase
             .Where(t => t.PartyId == id && !t.IsDeleted);
 
         if (from.HasValue) txnQuery = txnQuery.Where(t => t.EntryDate >= from.Value);
-        if (to.HasValue)   txnQuery = txnQuery.Where(t => t.EntryDate <= to.Value);
+        if (to.HasValue) txnQuery = txnQuery.Where(t => t.EntryDate <= to.Value);
 
         var transactions = await txnQuery
             .OrderByDescending(t => t.EntryDate)

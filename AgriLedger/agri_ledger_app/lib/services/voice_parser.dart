@@ -12,13 +12,14 @@
 
 class ParsedVoiceEntry {
   final String? partyName;
-  final String? txnType;       // purchase | sale | cash_in | cash_out | bag_given | bag_returned
-  final String? commodity;     // rice | wheat | maize
+  final String?
+      txnType; // purchase | sale | cash_in | cash_out | bag_given | bag_returned
+  final String? commodity; // rice | wheat | maize
   final double? quantityKg;
   final double? ratePerKg;
   final double? amount;
   final int? bagCount;
-  final String? paymentMode;   // cash | upi | credit
+  final String? paymentMode; // cash | upi | credit
   final String rawText;
 
   // Confidence 0.0–1.0: how sure we are about the parse
@@ -38,7 +39,10 @@ class ParsedVoiceEntry {
   });
 
   bool get isEmpty =>
-    partyName == null && txnType == null && amount == null && bagCount == null;
+      partyName == null &&
+      txnType == null &&
+      amount == null &&
+      bagCount == null;
 
   ParsedVoiceEntry copyWith({
     String? partyName,
@@ -50,30 +54,29 @@ class ParsedVoiceEntry {
     int? bagCount,
     String? paymentMode,
     double? confidence,
-  }) => ParsedVoiceEntry(
-    partyName: partyName ?? this.partyName,
-    txnType: txnType ?? this.txnType,
-    commodity: commodity ?? this.commodity,
-    quantityKg: quantityKg ?? this.quantityKg,
-    ratePerKg: ratePerKg ?? this.ratePerKg,
-    amount: amount ?? this.amount,
-    bagCount: bagCount ?? this.bagCount,
-    paymentMode: paymentMode ?? this.paymentMode,
-    rawText: rawText,
-    confidence: confidence ?? this.confidence,
-  );
+  }) =>
+      ParsedVoiceEntry(
+        partyName: partyName ?? this.partyName,
+        txnType: txnType ?? this.txnType,
+        commodity: commodity ?? this.commodity,
+        quantityKg: quantityKg ?? this.quantityKg,
+        ratePerKg: ratePerKg ?? this.ratePerKg,
+        amount: amount ?? this.amount,
+        bagCount: bagCount ?? this.bagCount,
+        paymentMode: paymentMode ?? this.paymentMode,
+        rawText: rawText,
+        confidence: confidence ?? this.confidence,
+      );
 
   @override
-  String toString() =>
-    'party=$partyName type=$txnType commodity=$commodity '
-    'qty=${quantityKg}kg rate=$ratePerKg amount=$amount bags=$bagCount '
-    'confidence=${(confidence * 100).toStringAsFixed(0)}%';
+  String toString() => 'party=$partyName type=$txnType commodity=$commodity '
+      'qty=${quantityKg}kg rate=$ratePerKg amount=$amount bags=$bagCount '
+      'confidence=${(confidence * 100).toStringAsFixed(0)}%';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 
 class VoiceParser {
-
   // ── COMMODITY KEYWORDS ────────────────────────────────────────────
   static const _commodityMap = <String, String>{
     // Rice / Paddy
@@ -81,7 +84,7 @@ class VoiceParser {
     'chawal': 'rice', 'dhan': 'rice', 'chaawal': 'rice',
 // Wheat
     'गेहूं': 'wheat', 'गेहू': 'wheat', 'wheat': 'wheat',
-'gehu': 'wheat',
+    'gehu': 'wheat',
     // Maize
     'मक्का': 'maize', 'मक्के': 'maize', 'maize': 'maize',
     'makka': 'maize', 'makke': 'maize', 'corn': 'maize', 'bhutta': 'maize',
@@ -89,55 +92,164 @@ class VoiceParser {
 
   // ── PURCHASE KEYWORDS ─────────────────────────────────────────────
   static const _purchaseWords = [
-    'खरीदा', 'खरीदी', 'खरीदे', 'liya', 'lia', 'purchase', 'kharida',
-    'kharidi', 'kharide', 'लिया', 'ली', 'ले', 'aaya', 'आया', 'mila',
+    'खरीदा',
+    'खरीदी',
+    'खरीदे',
+    'liya',
+    'lia',
+    'purchase',
+    'kharida',
+    'kharidi',
+    'kharide',
+    'लिया',
+    'ली',
+    'ले',
+    'aaya',
+    'आया',
+    'mila',
   ];
 
   // ── SALE KEYWORDS ─────────────────────────────────────────────────
   static const _saleWords = [
-    'बेचा', 'बेची', 'becha', 'bechi', 'sale', 'diya', 'दिया', 'भेजा',
-    'bheja', 'sold', 'supply', 'nikala', 'निकाला',
+    'बेचा',
+    'बेची',
+    'becha',
+    'bechi',
+    'sale',
+    'diya',
+    'दिया',
+    'भेजा',
+    'bheja',
+    'sold',
+    'supply',
+    'nikala',
+    'निकाला',
   ];
 
   // ── CASH IN KEYWORDS ─────────────────────────────────────────────
   static const _cashInWords = [
-    'मिला', 'मिली', 'received', 'mila', 'mili', 'aaya', 'आया',
-    'payment mila', 'paisa mila', 'rupee mila', 'cash mila',
+    'मिला',
+    'मिली',
+    'मिले',
+    'received',
+    'mila',
+    'mili',
+    'mile',
+    'aaya',
+    'आया',
+    'payment mila',
+    'paisa mila',
+    'rupee mila',
+    'cash mila',
   ];
 
   // ── CASH OUT KEYWORDS ─────────────────────────────────────────────
   static const _cashOutWords = [
-    'दिया', 'दी', 'paid', 'diya', 'di', 'payment diya',
-    'paisa diya', 'rupee diya', 'cash diya', 'bheji', 'bheja',
+    'दिया',
+    'दी',
+    'दिए',
+    'दिये',
+    'paid',
+    'diya',
+    'di',
+    'diye',
+    'die',
+    'payment diya',
+    'paisa diya',
+    'rupee diya',
+    'cash diya',
+    'bheji',
+    'bheja',
   ];
 
   // ── BAG KEYWORDS ──────────────────────────────────────────────────
   static const _bagWords = [
-    'बोरी', 'bori', 'bag', 'bags', 'थैला', 'thela', 'बोरा', 'bora',
-    'बोरिया', 'बोरियां', 'boriya', 'boriyan', 'बारी', 'bari', 'बोरे', 'bore', 'बोर', 'bor', 'बैग',
+    'बोरी',
+    'bori',
+    'bag',
+    'bags',
+    'थैला',
+    'thela',
+    'बोरा',
+    'bora',
+    'बोरिया',
+    'बोरियां',
+    'boriya',
+    'boriyan',
+    'बारी',
+    'bari',
+    'बोरे',
+    'bore',
+    'बोर',
+    'bor',
+    'बैग',
   ];
 
   static const _bagGivenWords = [
-    'दी', 'दिया', 'दिए', 'diya', 'di', 'die', 'given', 'दिये',
+    'दी',
+    'दिया',
+    'दिए',
+    'diya',
+    'di',
+    'die',
+    'given',
+    'दिये',
   ];
 
   static const _bagReturnedWords = [
-    'वापस', 'वापस आई', 'returned', 'wapas', 'vapas', 'lautaya', 'ली',
+    'वापस',
+    'वापस आई',
+    'returned',
+    'wapas',
+    'vapas',
+    'lautaya',
+    'ली',
   ];
 
   // ── UNIT KEYWORDS ─────────────────────────────────────────────────
   static const _kgWords = [
-    'किलो', 'किलोग्राम', 'kg', 'kilo', 'kilogram', 'किलों',
+    'किलो',
+    'किलोग्राम',
+    'kg',
+    'kilo',
+    'kilogram',
+    'किलों',
   ];
 
   static const _rateWords = [
-    'रेट', 'रुपये', 'रुपए', 'rupye', 'rupee', 'rupees', 'rate',
-    'ka rate', 'ke bhav', 'भाव', 'bhav', 'price', 'per',
+    'रेट',
+    'रुपये',
+    'रुपए',
+    'rupye',
+    'rupee',
+    'rupees',
+    'rate',
+    'ka rate',
+    'ke bhav',
+    'भाव',
+    'bhav',
+    'price',
+    'per',
+    '@',
+    'at',
   ];
 
   // ── PAYMENT MODE KEYWORDS ─────────────────────────────────────────
-  static const _upiWords = ['upi', 'online', 'phonepe', 'gpay', 'paytm', 'neft'];
-  static const _creditWords = ['उधार', 'udhaar', 'credit', 'baad mein', 'baaki'];
+  static const _upiWords = [
+    'upi',
+    'online',
+    'phonepe',
+    'gpay',
+    'paytm',
+    'neft'
+  ];
+  static const _creditWords = [
+    'उधार',
+    'udhaar',
+    'credit',
+    'baad mein',
+    'baaki'
+  ];
 
   // ── HINDI NUMBER WORDS (for bag count etc.) ────────────────────────
   static const _hindiNumberWords = <String, String>{
@@ -157,13 +269,16 @@ class VoiceParser {
   // NOTE: Using (?:^|\s) instead of \b because \b doesn't work with Devanagari
   static final _partyBeforePatterns = [
     // Devanagari names: "शंकर को", "राम लाल से"
-    RegExp(r'([\u0900-\u097F]+(?:\s+[\u0900-\u097F]+)*)\s+(?:से|को|ने)', caseSensitive: false),
+    RegExp(r'([\u0900-\u097F]+(?:\s+[\u0900-\u097F]+)*)\s+(?:से|को|ने)',
+        caseSensitive: false),
     // Latin names: "sharma ko", "Ram Lal se"
-    RegExp(r'([a-zA-Z]+(?:\s+[a-zA-Z]+)*)\s+(?:se|ko|ne)\b', caseSensitive: false),
+    RegExp(r'([a-zA-Z]+(?:\s+[a-zA-Z]+)*)\s+(?:se|ko|ne)\b',
+        caseSensitive: false),
   ];
   static final _partyAfterPatterns = [
     // "को शंकर", "se sharma"
-    RegExp(r'(?:से|को|se|ko)\s+([\u0900-\u097F]+(?:\s+[\u0900-\u097F]+)*)', caseSensitive: false),
+    RegExp(r'(?:से|को|se|ko)\s+([\u0900-\u097F]+(?:\s+[\u0900-\u097F]+)*)',
+        caseSensitive: false),
     RegExp(r'(?:se|ko)\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)\b', caseSensitive: false),
   ];
 
@@ -195,12 +310,13 @@ class VoiceParser {
       final kgIdx = _findKgIndex(text);
       final rateIdx = _findRateIndex(text);
 
-      if (kgIdx >= 0 && numbers.length >= 1) {
+      if (kgIdx >= 0 && numbers.isNotEmpty) {
         quantityKg = _findNumberNear(text, numbers, kgIdx);
         confidence += 15;
       }
       if (rateIdx >= 0 && numbers.length >= 2) {
-        ratePerKg = _findNumberNear(text, numbers, rateIdx, exclude: quantityKg);
+        ratePerKg =
+            _findNumberNear(text, numbers, rateIdx, exclude: quantityKg);
         confidence += 15;
       }
       // Auto-calculate amount
@@ -254,7 +370,7 @@ class VoiceParser {
 
   /// Normalize text: Hindi digits → Arabic, Hindi number words → digits, lowercase
   static String _normalizeText(String text) {
-    const hindi = ['०','१','२','३','४','५','६','७','८','९'];
+    const hindi = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
     var result = text.toLowerCase().trim();
     for (int i = 0; i < hindi.length; i++) {
       result = result.replaceAll(hindi[i], '$i');
@@ -265,11 +381,11 @@ class VoiceParser {
     }
     // Normalize common speech-to-text variations
     result = result
-      .replaceAll('rupye', 'rupees')
-      .replaceAll('rupaya', 'rupees')
-      .replaceAll('rupaiye', 'rupees')
-      .replaceAll('रुपय', 'रुपये')
-      .replaceAll('किलोग्राम', 'किलो');
+        .replaceAll('rupye', 'rupees')
+        .replaceAll('rupaya', 'rupees')
+        .replaceAll('rupaiye', 'rupees')
+        .replaceAll('रुपय', 'रुपये')
+        .replaceAll('किलोग्राम', 'किलो');
     return result;
   }
 
@@ -286,11 +402,11 @@ class VoiceParser {
   /// Extract all numbers from text (handles decimals)
   static List<double> _extractNumbers(String text) {
     return RegExp(r'\d+\.?\d*')
-      .allMatches(text)
-      .map((m) => double.tryParse(m.group(0)!))
-      .whereType<double>()
-      .where((n) => n > 0)
-      .toList();
+        .allMatches(text)
+        .map((m) => double.tryParse(m.group(0)!))
+        .whereType<double>()
+        .where((n) => n > 0)
+        .toList();
   }
 
   /// Detect transaction type from keywords
@@ -298,10 +414,10 @@ class VoiceParser {
     // Check BAG keywords FIRST — words like 'diya'/'di' overlap with cash_out
     final hasBag = _bagWords.any((w) => text.contains(w.toLowerCase()));
     if (hasBag) {
-      final isBagGiven = _bagGivenWords.any((w) => text.contains(w));
       final isBagReturned = _bagReturnedWords.any((w) => text.contains(w));
-      if (isBagGiven) return 'bag_given';
+      final isBagGiven = _bagGivenWords.any((w) => text.contains(w));
       if (isBagReturned) return 'bag_returned';
+      if (isBagGiven) return 'bag_given';
       return 'bag_given'; // default bag direction
     }
 
@@ -334,6 +450,11 @@ class VoiceParser {
   /// Find index of rate keyword in text
   static int _findRateIndex(String text) {
     for (final word in _rateWords) {
+      if (word == 'at') {
+        final match = RegExp(r'(?:^|\s)at\s+').firstMatch(text);
+        if (match != null) return match.start;
+        continue;
+      }
       final idx = text.indexOf(word.toLowerCase());
       if (idx >= 0) return idx;
     }
@@ -351,8 +472,8 @@ class VoiceParser {
 
   /// Find the number closest (before) a keyword position
   static double? _findNumberNear(
-    String text, List<double> numbers, int keywordIdx, {double? exclude}
-  ) {
+      String text, List<double> numbers, int keywordIdx,
+      {double? exclude}) {
     if (numbers.isEmpty) return null;
     // Find all number positions in the text
     final matches = RegExp(r'\d+\.?\d*').allMatches(text).toList();
@@ -372,7 +493,8 @@ class VoiceParser {
     return best;
   }
 
-  static double? _findIntNear(String text, List<double> numbers, int keywordIdx) {
+  static double? _findIntNear(
+      String text, List<double> numbers, int keywordIdx) {
     return _findNumberNear(text, numbers, keywordIdx);
   }
 
@@ -388,9 +510,10 @@ class VoiceParser {
       final match = pattern.firstMatch(originalText);
       if (match != null) {
         final name = match.group(1)?.trim();
-        if (name != null && name.length > 1
-            && !_isKeyword(name.toLowerCase())
-            && !_isPureNumber(name)) {
+        if (name != null &&
+            name.length > 1 &&
+            !_isKeyword(name.toLowerCase()) &&
+            !_isPureNumber(name)) {
           return _toTitleCase(name);
         }
       }
@@ -400,9 +523,10 @@ class VoiceParser {
       final match = pattern.firstMatch(normalizedText);
       if (match != null) {
         final name = match.group(1)?.trim();
-        if (name != null && name.length > 1
-            && !_isKeyword(name.toLowerCase())
-            && !_isPureNumber(name)) {
+        if (name != null &&
+            name.length > 1 &&
+            !_isKeyword(name.toLowerCase()) &&
+            !_isPureNumber(name)) {
           return _toTitleCase(name);
         }
       }
@@ -412,9 +536,10 @@ class VoiceParser {
       final match = pattern.firstMatch(originalText);
       if (match != null) {
         final name = match.group(1)?.trim();
-        if (name != null && name.length > 1
-            && !_isKeyword(name.toLowerCase())
-            && !_isPureNumber(name)) {
+        if (name != null &&
+            name.length > 1 &&
+            !_isKeyword(name.toLowerCase()) &&
+            !_isPureNumber(name)) {
           return _toTitleCase(name);
         }
       }
@@ -423,9 +548,10 @@ class VoiceParser {
       final match = pattern.firstMatch(normalizedText);
       if (match != null) {
         final name = match.group(1)?.trim();
-        if (name != null && name.length > 1
-            && !_isKeyword(name.toLowerCase())
-            && !_isPureNumber(name)) {
+        if (name != null &&
+            name.length > 1 &&
+            !_isKeyword(name.toLowerCase()) &&
+            !_isPureNumber(name)) {
           return _toTitleCase(name);
         }
       }
@@ -435,7 +561,7 @@ class VoiceParser {
 
   static bool _isKeyword(String word) {
     final keywords = {
-      ...?_commodityMap.keys.map((k) => k.toLowerCase()),
+      ..._commodityMap.keys.map((k) => k.toLowerCase()),
       'kg', 'kilo', 'rupees', 'rate', 'purchase', 'sale',
       'cash', 'upi', 'bori', 'bag', 'bags',
       // Hindi number words should not be party names
@@ -447,9 +573,12 @@ class VoiceParser {
   }
 
   static String _toTitleCase(String text) {
-    return text.split(' ').map((w) =>
-      w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}'
-    ).join(' ');
+    return text
+        .split(' ')
+        .map((w) => w.isEmpty
+            ? w
+            : '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}')
+        .join(' ');
   }
 
   static String? _extractPaymentMode(String text) {
@@ -466,18 +595,15 @@ class VoiceParser {
 
   static void runTests() {
     final cases = [
-      ('राम लाल से 200 किलो चावल 22 रुपये किलो खरीदा',
-       'purchase/rice/200kg/22rate'),
-      ('sharma ko 5000 rupees diya',
-       'cash_out/5000'),
-      ('suresh ne 3 bori di',
-       'bag_given/3'),
-      ('150 kg gehu 21 rate pe becha ramesh ko',
-       'sale/wheat/150kg/21rate'),
-      ('500 cash mila ram se',
-       'cash_in/500'),
-      ('makka 100 kg liya 18 rupye',
-       'purchase/maize/100kg/18rate'),
+      (
+        'राम लाल से 200 किलो चावल 22 रुपये किलो खरीदा',
+        'purchase/rice/200kg/22rate'
+      ),
+      ('sharma ko 5000 rupees diya', 'cash_out/5000'),
+      ('suresh ne 3 bori di', 'bag_given/3'),
+      ('150 kg gehu 21 rate pe becha ramesh ko', 'sale/wheat/150kg/21rate'),
+      ('500 cash mila ram se', 'cash_in/500'),
+      ('makka 100 kg liya 18 rupye', 'purchase/maize/100kg/18rate'),
     ];
 
     for (final (input, expected) in cases) {

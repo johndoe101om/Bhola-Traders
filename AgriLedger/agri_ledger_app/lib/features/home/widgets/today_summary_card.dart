@@ -31,24 +31,33 @@ class TodaySummaryCard extends ConsumerWidget {
               children: [
                 // Net balance row
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                   decoration: BoxDecoration(
                     color: net >= 0
-                      ? AppTheme.moneyIn.withOpacity(0.1)
-                      : AppTheme.moneyOut.withOpacity(0.1),
+                        ? AppTheme.moneyIn.withOpacity(0.1)
+                        : AppTheme.moneyOut.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text('आज का नेट\nNet Today',
-                        style: TextStyle(fontSize: 14, height: 1.3,
-                          color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
-                      Text(
-                        formatRupees(net.abs()),
-                        style: TextStyle(
-                          fontSize: 26, fontWeight: FontWeight.bold,
-                          color: net >= 0 ? AppTheme.moneyIn : AppTheme.moneyOut,
+                          style: TextStyle(
+                              fontSize: 14,
+                              height: 1.3,
+                              color: AppTheme.textSecondary,
+                              fontWeight: FontWeight.w600)),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          formatRupees(net.abs()),
+                          style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                net >= 0 ? AppTheme.moneyIn : AppTheme.moneyOut,
+                          ),
                         ),
                       ),
                     ],
@@ -62,15 +71,19 @@ class TodaySummaryCard extends ConsumerWidget {
                 // 4-grid summary
                 Row(
                   children: [
-                    _SummaryCell('खरीदी\nPurchase', purchase, AppTheme.moneyOut, Icons.download_rounded),
-                    _BagSummaryCell('कुल बोरी\nTotal Bags', totalBags, AppTheme.bagColor, Icons.inventory_2_rounded),
+                    _SummaryCell('खरीदी\nPurchase', purchase, AppTheme.moneyOut,
+                        Icons.download_rounded),
+                    _BagSummaryCell('कुल बोरी\nTotal Bags', totalBags,
+                        AppTheme.bagColor, Icons.inventory_2_rounded),
                   ],
                 ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _SummaryCell('पैसा मिला\nCash In', cashIn, AppTheme.moneyIn, Icons.add_circle_rounded),
-                    _SummaryCell('पैसा दिया\nCash Out', cashOut, AppTheme.moneyOut, Icons.remove_circle_rounded),
+                    _SummaryCell('पैसा मिला\nCash In', cashIn, AppTheme.moneyIn,
+                        Icons.add_circle_rounded),
+                    _SummaryCell('पैसा दिया\nCash Out', cashOut,
+                        AppTheme.moneyOut, Icons.remove_circle_rounded),
                   ],
                 ),
               ],
@@ -109,11 +122,21 @@ class _SummaryCell extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                    style: const TextStyle(fontSize: 11, height: 1.2,
-                      color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.2,
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text(formatRupees(amount),
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(formatRupees(amount),
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: color)),
+                  ),
                 ],
               ),
             ),
@@ -151,11 +174,21 @@ class _BagSummaryCell extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(label,
-                    style: const TextStyle(fontSize: 11, height: 1.2,
-                      color: AppTheme.textSecondary, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.2,
+                          color: AppTheme.textSecondary,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text('$count',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text('$count',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: color)),
+                  ),
                 ],
               ),
             ),

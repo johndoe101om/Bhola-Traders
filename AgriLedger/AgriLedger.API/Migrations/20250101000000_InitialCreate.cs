@@ -1,11 +1,14 @@
 using System;
+using AgriLedger.API.Data;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace AgriLedger.API.Migrations
 {
-    /// <inheritdoc />
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20250101000000_InitialCreate")]
     public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
@@ -116,17 +119,17 @@ namespace AgriLedger.API.Migrations
                 });
 
             // ── INDEXES ────────────────────────────────────────────────
-            migrationBuilder.CreateIndex(name: "IX_Parties_Name",      table: "Parties",      column: "Name");
-            migrationBuilder.CreateIndex(name: "IX_Parties_Village",   table: "Parties",      column: "Village");
-            migrationBuilder.CreateIndex(name: "IX_Parties_PartyType", table: "Parties",      column: "PartyType");
-            migrationBuilder.CreateIndex(name: "IX_Parties_IsActive",  table: "Parties",      column: "IsActive");
+            migrationBuilder.CreateIndex(name: "IX_Parties_Name", table: "Parties", column: "Name");
+            migrationBuilder.CreateIndex(name: "IX_Parties_Village", table: "Parties", column: "Village");
+            migrationBuilder.CreateIndex(name: "IX_Parties_PartyType", table: "Parties", column: "PartyType");
+            migrationBuilder.CreateIndex(name: "IX_Parties_IsActive", table: "Parties", column: "IsActive");
 
-            migrationBuilder.CreateIndex(name: "IX_Transactions_PartyId",   table: "Transactions", column: "PartyId");
+            migrationBuilder.CreateIndex(name: "IX_Transactions_PartyId", table: "Transactions", column: "PartyId");
             migrationBuilder.CreateIndex(name: "IX_Transactions_EntryDate", table: "Transactions", column: "EntryDate");
-            migrationBuilder.CreateIndex(name: "IX_Transactions_TxnType",   table: "Transactions", column: "TxnType");
+            migrationBuilder.CreateIndex(name: "IX_Transactions_TxnType", table: "Transactions", column: "TxnType");
             migrationBuilder.CreateIndex(name: "IX_Transactions_IsDeleted", table: "Transactions", column: "IsDeleted");
 
-            migrationBuilder.CreateIndex(name: "IX_BagMovements_PartyId",   table: "BagMovements", column: "PartyId");
+            migrationBuilder.CreateIndex(name: "IX_BagMovements_PartyId", table: "BagMovements", column: "PartyId");
             migrationBuilder.CreateIndex(name: "IX_BagMovements_EntryDate", table: "BagMovements", column: "EntryDate");
             migrationBuilder.CreateIndex(name: "IX_BagMovements_LinkedTxnId", table: "BagMovements", column: "LinkedTxnId");
 
@@ -138,6 +141,7 @@ namespace AgriLedger.API.Migrations
             migrationBuilder.InsertData(
                 table: "Parties",
                 columns: new[] { "Id", "Name", "PartyType", "Village", "IsActive", "CreatedAt", "UpdatedAt" },
+                columnTypes: new[] { "TEXT", "TEXT", "TEXT", "TEXT", "INTEGER", "TEXT", "TEXT" },
                 values: new object[]
                 {
                     "00000000-0000-0000-0000-000000000001",

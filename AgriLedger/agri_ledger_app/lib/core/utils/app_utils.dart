@@ -7,7 +7,9 @@ import '../theme/app_theme.dart';
 // ── FORMATTERS ───────────────────────────────────────────────────────
 
 final _rupeeFormat = NumberFormat.currency(
-  locale: 'en_IN', symbol: '₹', decimalDigits: 0,
+  locale: 'en_IN',
+  symbol: '₹',
+  decimalDigits: 0,
 );
 final _kgFormat = NumberFormat('#,##0.#', 'en_IN');
 final _dateFormat = DateFormat('d MMM yyyy');
@@ -42,31 +44,31 @@ DateTime? tryParseDateTime(String? isoStr) {
 // ── COLORS BY TRANSACTION TYPE ───────────────────────────────────────
 
 Color txnColor(String txnType) => switch (txnType) {
-  'purchase' || 'cash_out' => AppTheme.moneyOut,
-  'sale'     || 'cash_in'  => AppTheme.moneyIn,
-  _ => Colors.grey,
-};
+      'purchase' || 'cash_out' => AppTheme.moneyOut,
+      'sale' || 'cash_in' => AppTheme.moneyIn,
+      _ => Colors.grey,
+    };
 
 Color directionColor(String direction) =>
-  direction == 'in' ? AppTheme.moneyIn : AppTheme.moneyOut;
+    direction == 'in' ? AppTheme.moneyIn : AppTheme.moneyOut;
 
 IconData txnIcon(String txnType) => switch (txnType) {
-  'purchase' => Icons.download_rounded,
-  'sale'     => Icons.upload_rounded,
-  'cash_in'  => Icons.add_circle_rounded,
-  'cash_out' => Icons.remove_circle_rounded,
-  _ => Icons.swap_horiz_rounded,
-};
+      'purchase' => Icons.download_rounded,
+      'sale' => Icons.upload_rounded,
+      'cash_in' => Icons.add_circle_rounded,
+      'cash_out' => Icons.remove_circle_rounded,
+      _ => Icons.swap_horiz_rounded,
+    };
 
 IconData partyTypeIcon(String type) => switch (type) {
-  'farmer'   => Icons.agriculture_rounded,
-  'supplier' => Icons.warehouse_rounded,
-  'customer' => Icons.person_rounded,
-  _ => Icons.people_rounded,
-};
+      'farmer' => Icons.agriculture_rounded,
+      'supplier' => Icons.warehouse_rounded,
+      'customer' => Icons.person_rounded,
+      _ => Icons.people_rounded,
+    };
 
 String commodityEmoji(String? commodity) =>
-  AppConstants.commodityEmoji[commodity] ?? '💰';
+    AppConstants.commodityEmoji[commodity] ?? '💰';
 
 // ── SNACKBAR HELPERS ─────────────────────────────────────────────────
 
@@ -90,7 +92,8 @@ void showError(BuildContext context, String message) {
 
 // ── CONFIRM DIALOG ───────────────────────────────────────────────────
 
-Future<bool> confirmDialog(BuildContext context, {
+Future<bool> confirmDialog(
+  BuildContext context, {
   required String title,
   required String message,
   String confirmLabel = 'हाँ / Yes',
@@ -99,7 +102,8 @@ Future<bool> confirmDialog(BuildContext context, {
   final result = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      title: Text(title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       content: Text(message, style: const TextStyle(fontSize: 16)),
       actions: [
         TextButton(
@@ -109,10 +113,30 @@ Future<bool> confirmDialog(BuildContext context, {
         ElevatedButton(
           onPressed: () => Navigator.pop(ctx, true),
           style: ElevatedButton.styleFrom(backgroundColor: AppTheme.moneyOut),
-          child: Text(confirmLabel, style: const TextStyle(fontSize: 16, color: Colors.white)),
+          child: Text(confirmLabel,
+              style: const TextStyle(fontSize: 16, color: Colors.white)),
         ),
       ],
     ),
   );
   return result ?? false;
+}
+
+// ── LOADING DIALOG ───────────────────────────────────────────────────
+
+void showLoadingDialog(BuildContext context,
+    {String message = 'कृपया प्रतीक्षा करें / Please wait...'}) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      content: Row(
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(width: 20),
+          Expanded(child: Text(message, style: const TextStyle(fontSize: 15))),
+        ],
+      ),
+    ),
+  );
 }

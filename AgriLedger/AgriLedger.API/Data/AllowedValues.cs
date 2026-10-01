@@ -14,8 +14,13 @@ public static class AllowedValues
     {
         "purchase" => "out",   // we pay out money to buy grain
         "cash_out" => "out",   // we give cash
-        "sale"     => "in",    // we receive money from selling
-        "cash_in"  => "in",    // we receive cash
+        "sale" => "in",    // we receive money from selling
+        "cash_in" => "in",    // we receive cash
         _ => "in"
     };
+
+    public static readonly string[] EmployeeTypes = ["labour", "driver", "supervisor", "other"];
+    public static readonly string[] AttendanceStatuses = ["present", "absent", "half_day", "overtime", "holiday"];
+    public static readonly string[] EmployeePaymentModes = ["cash", "upi", "bank_transfer"];
+    public static readonly string[] EmployeePaymentTypes = ["wage", "advance", "bonus", "deduction", "settlement"];
 }

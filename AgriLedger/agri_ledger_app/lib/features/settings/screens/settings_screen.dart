@@ -33,7 +33,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) {
         setState(() {
           _businessName = prefs.getString('business_name') ?? 'Bhola Traders';
-          _serverUrl = prefs.getString('server_url') ?? 'http://192.168.1.11:5000';
+          _serverUrl =
+              prefs.getString('server_url') ?? 'http://192.168.1.11:5000';
           _loading = false;
         });
       }
@@ -55,15 +56,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('⚙️ सेटिंग / Settings')),
       body: ListView(
         children: [
-
           // ── BUSINESS ─────────────────────────────────────────────
-          _SectionHeader('व्यापार / Business'),
+          const _SectionHeader('व्यापार / Business'),
           _SettingTile(
             icon: Icons.store_rounded,
             label: 'व्यापार का नाम / Business Name',
@@ -83,11 +85,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SyncSection(),
 
           // ── PRINTER ───────────────────────────────────────────────
-          _SectionHeader('प्रिंटर / Printer'),
+          const _SectionHeader('प्रिंटर / Printer'),
           ListTile(
             leading: const Icon(Icons.print_rounded, color: AppTheme.primary),
             title: const Text('Bluetooth Thermal Printer',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             subtitle: const Text('Setup & test your receipt printer'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => Navigator.push(
@@ -97,25 +99,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
 
           // ── SECURITY ──────────────────────────────────────────────
-          _SectionHeader('सुरक्षा / Security'),
+          const _SectionHeader('सुरक्षा / Security'),
           ListTile(
             leading: const Icon(Icons.lock_rounded, color: AppTheme.primary),
             title: const Text('PIN बदलें / Change PIN',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
             subtitle: const Text('Change your 4-digit login PIN'),
             trailing: const Icon(Icons.chevron_right_rounded),
             onTap: () => _changePinDialog(context),
           ),
 
           // ── DATA ──────────────────────────────────────────────────
-          _SectionHeader('डेटा / Data'),
+          const _SectionHeader('डेटा / Data'),
           _ClearSyncQueueTile(),
 
           // ── ABOUT ─────────────────────────────────────────────────
-          _SectionHeader('जानकारी / About'),
+          const _SectionHeader('जानकारी / About'),
           const ListTile(
             leading: Icon(Icons.storefront_rounded, color: AppTheme.primary),
-            title: Text('Bhola Traders', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            title: Text('Bhola Traders',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
             subtitle: Text('Version 1.0.0 • Phase 4\nTrust • Quality • Growth'),
           ),
 
@@ -208,15 +211,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 final prefs = await SharedPreferences.getInstance();
                 final current = prefs.getString('user_pin') ?? '1234';
                 if (oldCtrl.text != current) {
-                  if (dialogCtx.mounted) showError(dialogCtx, 'Current PIN is wrong');
+                  if (dialogCtx.mounted) {
+                    showError(dialogCtx, 'Current PIN is wrong');
+                  }
                   return;
                 }
                 if (newCtrl.text.length != 4) {
-                  if (dialogCtx.mounted) showError(dialogCtx, 'PIN must be 4 digits');
+                  if (dialogCtx.mounted) {
+                    showError(dialogCtx, 'PIN must be 4 digits');
+                  }
                   return;
                 }
                 if (newCtrl.text != confirmCtrl.text) {
-                  if (dialogCtx.mounted) showError(dialogCtx, 'PINs do not match');
+                  if (dialogCtx.mounted) {
+                    showError(dialogCtx, 'PINs do not match');
+                  }
                   return;
                 }
                 await prefs.setString('user_pin', newCtrl.text);
@@ -226,7 +235,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }
               } catch (e) {
                 debugPrint('[Settings] Change PIN error: $e');
-                if (dialogCtx.mounted) showError(dialogCtx, 'An error occurred');
+                if (dialogCtx.mounted) {
+                  showError(dialogCtx, 'An error occurred');
+                }
               }
             },
             child: const Text('Change'),
@@ -251,11 +262,12 @@ class _SyncSection extends ConsumerWidget {
       return ListTile(
         leading: const Icon(Icons.sync_rounded, color: AppTheme.primary),
         title: Text(engine.statusText,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         subtitle: syncCount > 0
-          ? Text('$syncCount entries pending upload',
-              style: TextStyle(color: Colors.orange[700]))
-          : const Text('All data synced', style: TextStyle(color: AppTheme.textSecondary)),
+            ? Text('$syncCount entries pending upload',
+                style: TextStyle(color: Colors.orange[700]))
+            : const Text('All data synced',
+                style: TextStyle(color: AppTheme.textSecondary)),
         trailing: ElevatedButton(
           onPressed: () async {
             try {
@@ -263,7 +275,8 @@ class _SyncSection extends ConsumerWidget {
               if (context.mounted) {
                 if (result.success) {
                   if (result.pushed > 0 || result.pulled > 0) {
-                    showSuccess(context, 'Synced! ↑${result.pushed} ↓${result.pulled}');
+                    showSuccess(
+                        context, 'Synced! ↑${result.pushed} ↓${result.pulled}');
                   } else {
                     showSuccess(context, 'Already up to date ✓');
                   }
@@ -287,7 +300,7 @@ class _SyncSection extends ConsumerWidget {
       return const ListTile(
         leading: Icon(Icons.sync_disabled_rounded, color: Colors.grey),
         title: Text('Sync unavailable',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         subtitle: Text('Sync engine could not start. Try restarting the app.'),
       );
     }
@@ -307,16 +320,19 @@ class _ClearSyncQueueTile extends ConsumerWidget {
     return ListTile(
       leading: Icon(Icons.delete_outline_rounded, color: Colors.red[400]),
       title: Text('सभी pending sync हटाएं',
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600,
-          color: Colors.red[400])),
-      subtitle: Text(syncCount > 0 
-        ? 'Clear $syncCount stuck sync queue items'
-        : 'No pending sync items'),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.red[400])),
+      subtitle: Text(syncCount > 0
+          ? 'Clear $syncCount stuck sync queue items'
+          : 'No pending sync items'),
       onTap: () async {
-        final ok = await confirmDialog(context,
+        final ok = await confirmDialog(
+          context,
           title: 'Clear Sync Queue?',
           message: 'This will delete $syncCount pending sync items. '
-            'Your local data is safe.',
+              'Your local data is safe.',
         );
         if (ok) {
           try {
@@ -339,11 +355,14 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
-    child: Text(text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,
-        color: AppTheme.textSecondary, letterSpacing: 0.5)),
-  );
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 6),
+        child: Text(text,
+            style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textSecondary,
+                letterSpacing: 0.5)),
+      );
 }
 
 class _SettingTile extends StatelessWidget {
@@ -353,18 +372,22 @@ class _SettingTile extends StatelessWidget {
   final VoidCallback onTap;
 
   const _SettingTile({
-    required this.icon, required this.label,
-    required this.value, required this.onTap,
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: AppTheme.primary),
-    title: Text(label,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-    subtitle: Text(value,
-      style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
-    trailing: const Icon(Icons.edit_rounded, size: 18, color: AppTheme.textHint),
-    onTap: onTap,
-  );
+        leading: Icon(icon, color: AppTheme.primary),
+        title: Text(label,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        subtitle: Text(value,
+            style:
+                const TextStyle(fontSize: 14, color: AppTheme.textSecondary)),
+        trailing:
+            const Icon(Icons.edit_rounded, size: 18, color: AppTheme.textHint),
+        onTap: onTap,
+      );
 }

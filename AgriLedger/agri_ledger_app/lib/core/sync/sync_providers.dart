@@ -9,9 +9,7 @@ import '../theme/app_theme.dart';
 
 final syncEngineProvider = ChangeNotifierProvider<SyncEngine>((ref) {
   final repo = ref.watch(appRepositoryProvider);
-  final engine = SyncEngine(repo: repo);
-  ref.onDispose(engine.dispose);
-  return engine;
+  return SyncEngine(repo: repo);
 });
 
 // ── SYNC STATUS BAR WIDGET ────────────────────────────────────────────
@@ -58,25 +56,31 @@ class SyncStatusBar extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (state.status == SyncStatus.syncing)
-              SizedBox(width: 14, height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2, color: color))
+              SizedBox(
+                  width: 14,
+                  height: 14,
+                  child:
+                      CircularProgressIndicator(strokeWidth: 2, color: color))
             else
               Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
             Text(
               '${engine.statusTextHindi}  •  ${engine.statusText}',
-              style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                  fontSize: 12, color: color, fontWeight: FontWeight.w600),
             ),
             if (state.pendingCount > 0) ...[
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange, borderRadius: BorderRadius.circular(10)),
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(10)),
                 child: Text('${state.pendingCount} pending',
-                  style: const TextStyle(color: Colors.white, fontSize: 11,
-                    fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold)),
               ),
             ],
           ],
@@ -100,11 +104,18 @@ class SyncEngineIconButton extends ConsumerWidget {
     Color color = Colors.white;
 
     switch (state.status) {
-      case SyncStatus.offline:  icon = Icons.cloud_off_rounded;    color = Colors.orange[300]!;
-      case SyncStatus.syncing:  icon = Icons.sync_rounded;
-      case SyncStatus.success:  icon = Icons.cloud_done_rounded;
-      case SyncStatus.failed:   icon = Icons.sync_problem_rounded; color = Colors.red[300]!;
-      case SyncStatus.idle:     icon = Icons.cloud_sync_rounded;
+      case SyncStatus.offline:
+        icon = Icons.cloud_off_rounded;
+        color = Colors.orange[300]!;
+      case SyncStatus.syncing:
+        icon = Icons.sync_rounded;
+      case SyncStatus.success:
+        icon = Icons.cloud_done_rounded;
+      case SyncStatus.failed:
+        icon = Icons.sync_problem_rounded;
+        color = Colors.red[300]!;
+      case SyncStatus.idle:
+        icon = Icons.cloud_sync_rounded;
     }
 
     return Stack(
@@ -112,24 +123,31 @@ class SyncEngineIconButton extends ConsumerWidget {
       children: [
         IconButton(
           icon: state.status == SyncStatus.syncing
-            ? const SizedBox(width: 20, height: 20,
-                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : Icon(icon, color: color),
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2))
+              : Icon(icon, color: color),
           tooltip: engine.statusText,
           onPressed: () => engine.syncNow(force: true),
         ),
         if (state.pendingCount > 0)
           Positioned(
-            top: 6, right: 6,
+            top: 6,
+            right: 6,
             child: Container(
-              width: 16, height: 16,
+              width: 16,
+              height: 16,
               decoration: const BoxDecoration(
-                color: Colors.orange, shape: BoxShape.circle),
+                  color: Colors.orange, shape: BoxShape.circle),
               child: Center(
                 child: Text(
                   state.pendingCount > 9 ? '9+' : '${state.pendingCount}',
-                  style: const TextStyle(color: Colors.white, fontSize: 9,
-                    fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ),

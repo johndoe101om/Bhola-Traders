@@ -26,5 +26,5 @@ tasks.register<Delete>("clean") {
 }
 
 tasks.named<Wrapper>("wrapper") {
-    gradleVersion = "8.14"
+    gradleVersion = "7.6.1"
 }

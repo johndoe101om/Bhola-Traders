@@ -37,7 +37,8 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
   }
 
   Future<void> _loadParty() async {
-    final p = await ref.read(appRepositoryProvider).getPartyById(widget.partyId!);
+    final p =
+        await ref.read(appRepositoryProvider).getPartyById(widget.partyId!);
     if (mounted) setState(() => _party = p);
   }
 
@@ -50,9 +51,13 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
         padding: const EdgeInsets.only(top: 8, bottom: 24),
         itemCount: parties.length,
         itemBuilder: (_, i) => ListTile(
-          leading: Icon(partyTypeIcon(parties[i].partyType), color: AppTheme.primary),
-          title: Text(parties[i].name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
-          subtitle: parties[i].village != null ? Text(parties[i].village!) : null,
+          leading: Icon(partyTypeIcon(parties[i].partyType),
+              color: AppTheme.primary),
+          title: Text(parties[i].name,
+              style:
+                  const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          subtitle:
+              parties[i].village != null ? Text(parties[i].village!) : null,
           onTap: () => Navigator.pop(context, parties[i]),
         ),
       ),
@@ -62,9 +67,15 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
 
   Future<void> _save() async {
     if (_saving) return;
-    if (_party == null && widget.bag == null) { showError(context, 'पार्टी चुनें / Select party'); return; }
+    if (_party == null && widget.bag == null) {
+      showError(context, 'पार्टी चुनें / Select party');
+      return;
+    }
     final qty = int.tryParse(_qtyCtrl.text);
-    if (qty == null || qty <= 0) { showError(context, 'संख्या डालें / Enter quantity'); return; }
+    if (qty == null || qty <= 0) {
+      showError(context, 'संख्या डालें / Enter quantity');
+      return;
+    }
 
     setState(() => _saving = true);
     try {
@@ -73,7 +84,9 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
         final updated = widget.bag!.copyWith(
           movement: _movement,
           quantity: qty,
-          notes: _notesCtrl.text.trim().isEmpty ? const drift.Value(null) : drift.Value(_notesCtrl.text.trim()),
+          notes: _notesCtrl.text.trim().isEmpty
+              ? const drift.Value(null)
+              : drift.Value(_notesCtrl.text.trim()),
           syncedAt: const drift.Value(null),
           updatedAt: DateTime.now().toIso8601String(),
         );
@@ -85,11 +98,13 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
       } else {
         // Create new
         await ref.read(appRepositoryProvider).createBagMovement(
-          partyId: _party!.id,
-          movement: _movement,
-          quantity: qty,
-          notes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-        );
+              partyId: _party!.id,
+              movement: _movement,
+              quantity: qty,
+              notes: _notesCtrl.text.trim().isEmpty
+                  ? null
+                  : _notesCtrl.text.trim(),
+            );
         if (mounted) {
           showSuccess(context, 'बोरी एंट्री सेव हो गई!');
           Navigator.pop(context, true);
@@ -110,7 +125,9 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
         title: const Text('हटाएं? / Delete?'),
         content: const Text('क्या आप इस बोरी एंट्री को हटाना चाहते हैं?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('CANCEL')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('DELETE', style: TextStyle(color: Colors.red)),
@@ -140,7 +157,8 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit ? 'एंट्री बदलें / Edit Entry' : 'बोरी एंट्री / Bag Entry'),
+        title: Text(
+            isEdit ? 'एंट्री बदलें / Edit Entry' : 'बोरी एंट्री / Bag Entry'),
         actions: [
           if (isEdit)
             IconButton(
@@ -156,13 +174,18 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
           children: [
             // Movement type
             const Text('बोरी का प्रकार / Type',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 10),
             Row(
               children: AppConstants.bagMovements.map((m) {
                 final isSelected = m == _movement;
-                final label = AppConstants.bagMovementLabels[m]?.split('\n') ?? [m];
-                final color = m == 'given' ? AppTheme.moneyOut : AppTheme.moneyIn;
+                final label =
+                    AppConstants.bagMovementLabels[m]?.split('\n') ?? [m];
+                final color =
+                    m == 'given' ? AppTheme.moneyOut : AppTheme.moneyIn;
                 return Expanded(
                   child: GestureDetector(
                     onTap: () => setState(() => _movement = m),
@@ -172,17 +195,22 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       decoration: BoxDecoration(
                         color: isSelected ? color : color.withOpacity(0.08),
-                        border: Border.all(color: color, width: isSelected ? 2 : 1),
+                        border:
+                            Border.all(color: color, width: isSelected ? 2 : 1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
                         children: [
-                          Text(m == 'given' ? '📦' : '✅', style: const TextStyle(fontSize: 32)),
+                          Text(m == 'given' ? '📦' : '✅',
+                              style: const TextStyle(fontSize: 32)),
                           const SizedBox(height: 8),
                           Text(label.join('\n'),
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700,
-                              color: isSelected ? Colors.white : color, height: 1.3)),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: isSelected ? Colors.white : color,
+                                  height: 1.3)),
                         ],
                       ),
                     ),
@@ -194,7 +222,11 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
 
             // Party
             if (!isEdit) ...[
-              const Text('पार्टी / Party', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+              const Text('पार्टी / Party',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.textSecondary)),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _pickParty,
@@ -207,13 +239,21 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(_party != null ? partyTypeIcon(_party!.partyType) : Icons.person_search_rounded,
-                        color: AppTheme.primary),
+                      Icon(
+                          _party != null
+                              ? partyTypeIcon(_party!.partyType)
+                              : Icons.person_search_rounded,
+                          color: AppTheme.primary),
                       const SizedBox(width: 12),
                       Text(_party?.name ?? 'पार्टी चुनें / Select Party',
-                        style: TextStyle(fontSize: 17,
-                          color: _party != null ? AppTheme.textPrimary : AppTheme.textHint,
-                          fontWeight: _party != null ? FontWeight.w600 : FontWeight.normal)),
+                          style: TextStyle(
+                              fontSize: 17,
+                              color: _party != null
+                                  ? AppTheme.textPrimary
+                                  : AppTheme.textHint,
+                              fontWeight: _party != null
+                                  ? FontWeight.w600
+                                  : FontWeight.normal)),
                       const Spacer(),
                       const Icon(Icons.arrow_drop_down_rounded),
                     ],
@@ -224,7 +264,11 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
             ],
 
             // Quantity
-            const Text('संख्या / Quantity', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+            const Text('संख्या / Quantity',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             TextField(
               controller: _qtyCtrl,
@@ -239,12 +283,17 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
             const SizedBox(height: 16),
 
             // Notes
-            const Text('नोट / Notes', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.textSecondary)),
+            const Text('नोट / Notes',
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
             TextField(
               controller: _notesCtrl,
               style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(hintText: 'वैकल्पिक / Optional'),
+              decoration:
+                  const InputDecoration(hintText: 'वैकल्पिक / Optional'),
             ),
 
             const Spacer(),
@@ -256,11 +305,17 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
                 onPressed: _saving ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.bagColor,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                  _saving ? 'सेव हो रहा है...' : (isEdit ? 'अपडेट करें / Update' : 'सेव करें / Save'),
-                  style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800),
+                  _saving
+                      ? 'सेव हो रहा है...'
+                      : (isEdit ? 'अपडेट करें / Update' : 'सेव करें / Save'),
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800),
                 ),
               ),
             ),

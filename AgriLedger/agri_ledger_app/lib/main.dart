@@ -17,7 +17,7 @@ void main() async {
   // Initialize Supabase only if valid URL is provided (not the placeholder)
   final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
   final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-  
+
   if (supabaseUrl.isNotEmpty && supabaseUrl != 'YOUR_SUPABASE_PROJECT_URL') {
     await Supabase.initialize(
       url: supabaseUrl,
@@ -62,7 +62,6 @@ class _StartupRouter extends StatefulWidget {
 
 class _StartupRouterState extends State<_StartupRouter> {
   bool _loading = true;
-  bool _hasPinSetup = false;
 
   @override
   void initState() {
@@ -77,7 +76,11 @@ class _StartupRouterState extends State<_StartupRouter> {
     if (pin == null) {
       await prefs.setString('user_pin', '1234');
     }
-    if (mounted) setState(() { _loading = false; _hasPinSetup = true; });
+    if (mounted) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   @override

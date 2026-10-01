@@ -41,7 +41,7 @@ public class TransactionsController : ControllerBase
             query = query.Where(t => t.Commodity == commodity.ToLower());
 
         if (from.HasValue) query = query.Where(t => t.EntryDate >= from.Value);
-        if (to.HasValue)   query = query.Where(t => t.EntryDate <= to.Value);
+        if (to.HasValue) query = query.Where(t => t.EntryDate <= to.Value);
 
         var total = await query.CountAsync();
 
@@ -116,23 +116,27 @@ public class TransactionsController : ControllerBase
         [FromQuery] DateOnly? to)
     {
         var startDate = from ?? DateOnly.FromDateTime(DateTime.Today.AddDays(-30));
-        var endDate   = to   ?? DateOnly.FromDateTime(DateTime.Today);
+        var endDate = to ?? DateOnly.FromDateTime(DateTime.Today);
 
-        var summaries = await _db.Transactions
+        var txns = await _db.Transactions
             .Where(t => !t.IsDeleted && t.EntryDate >= startDate && t.EntryDate <= endDate)
+            .Select(t => new { t.EntryDate, t.TxnType, t.Amount, t.Direction })
+            .ToListAsync();
+
+        var summaries = txns
             .GroupBy(t => t.EntryDate)
             .Select(g => new TransactionSummary
             {
                 Date = g.Key,
                 TotalPurchaseAmount = g.Where(t => t.TxnType == "purchase").Sum(t => t.Amount),
-                TotalSaleAmount     = g.Where(t => t.TxnType == "sale").Sum(t => t.Amount),
-                TotalCashIn         = g.Where(t => t.TxnType == "cash_in").Sum(t => t.Amount),
-                TotalCashOut        = g.Where(t => t.TxnType == "cash_out").Sum(t => t.Amount),
-                NetCash             = g.Sum(t => t.Direction == "in" ? t.Amount : -t.Amount),
-                TotalTransactions   = g.Count()
+                TotalSaleAmount = g.Where(t => t.TxnType == "sale").Sum(t => t.Amount),
+                TotalCashIn = g.Where(t => t.TxnType == "cash_in").Sum(t => t.Amount),
+                TotalCashOut = g.Where(t => t.TxnType == "cash_out").Sum(t => t.Amount),
+                NetCash = g.Where(t => t.Direction == "in").Sum(t => t.Amount) - g.Where(t => t.Direction == "out").Sum(t => t.Amount),
+                TotalTransactions = g.Count()
             })
             .OrderByDescending(s => s.Date)
-            .ToListAsync();
+            .ToList();
 
         return Ok(ApiResponse<List<TransactionSummary>>.Ok(summaries));
     }
@@ -143,8 +147,10 @@ public class TransactionsController : ControllerBase
     public async Task<ActionResult<ApiResponse<TransactionDetail>>> Create(
         [FromBody] CreateTransactionRequest req)
     {
-        // Validate
-        var validationError = await ValidateTransactionRequest(req.PartyId, req.TxnType, req.Amount, req.Commodity);
+        if (!await _db.Parties.AnyAsync(p => p.Id == req.PartyId && p.IsActive))
+            return NotFound(ApiResponse<TransactionDetail>.Fail("Party not found."));
+
+        var validationError = ValidateTransactionRequest(req.TxnType, req.Amount, req.Commodity);
         if (validationError != null)
             return BadRequest(ApiResponse<TransactionDetail>.Fail(validationError));
 
@@ -258,11 +264,9 @@ public class TransactionsController : ControllerBase
 
     // ── HELPERS ───────────────────────────────────────────────────────
 
-    private async Task<string?> ValidateTransactionRequest(
-        string partyId, string txnType, decimal amount, string? commodity)
+    private static string? ValidateTransactionRequest(
+        string txnType, decimal amount, string? commodity)
     {
-        if (!await _db.Parties.AnyAsync(p => p.Id == partyId && p.IsActive))
-            return "Party not found.";
 
         if (!AllowedValues.TxnTypes.Contains(txnType.ToLower()))
             return $"Invalid txn_type. Allowed: {string.Join(", ", AllowedValues.TxnTypes)}";

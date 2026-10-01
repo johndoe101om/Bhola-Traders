@@ -1,10 +1,15 @@
 using AgriLedger.API.Data;
+using AgriLedger.API.DTOs;
 using AgriLedger.API.Middleware;
+using AgriLedger.API.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ── SERVICES ──────────────────────────────────────────────────────────
+
+builder.Services.AddHttpClient<INotificationService, NotificationService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
@@ -15,6 +20,21 @@ builder.Services.AddControllers()
         opts.JsonSerializerOptions.DefaultIgnoreCondition =
             System.Text.Json.Serialization.JsonIgnoreCondition.Never;
     });
+
+// Configure standardized validation error response format
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value?.Errors.Count > 0)
+            .SelectMany(x => x.Value!.Errors.Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage) ? $"{x.Key} is invalid" : e.ErrorMessage))
+            .ToList();
+
+        var response = ApiResponse<object>.Fail("Validation failed.", errors);
+        return new BadRequestObjectResult(response);
+    };
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -56,7 +76,6 @@ var usePostgres = builder.Configuration.GetValue<bool>("Database:UsePostgres");
 
 if (usePostgres)
 {
-    // Phase 2: Uncomment when moving to PostgreSQL
     builder.Services.AddDbContext<AppDbContext>(opt =>
         opt.UseNpgsql(
             builder.Configuration.GetConnectionString("PostgreSQL"),
@@ -65,7 +84,6 @@ if (usePostgres)
 }
 else
 {
-    // Phase 1: SQLite
     var dbPath = builder.Configuration["Database:SqlitePath"] ?? "agriledger.db";
     builder.Services.AddDbContext<AppDbContext>(opt =>
         opt.UseSqlite(
@@ -74,7 +92,7 @@ else
         ));
 }
 
-// ── CORS (for testing from browser/Postman) ───────────────────────────
+// ── CORS ──────────────────────────────────────────────────────────────
 builder.Services.AddCors(opt =>
 {
     opt.AddDefaultPolicy(policy =>
@@ -85,6 +103,18 @@ builder.Services.AddCors(opt =>
 
 // ── BUILD ─────────────────────────────────────────────────────────────
 var app = builder.Build();
+
+// ── GLOBAL EXCEPTION HANDLING & SECURITY HEADERS ──────────────────────
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
 
 // ── AUTO MIGRATE ON STARTUP ───────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
@@ -128,3 +158,6 @@ app.MapGet("/health", () => new
 });
 
 app.Run();
+
+// Required for WebApplicationFactory integration testing
+public partial class Program { }

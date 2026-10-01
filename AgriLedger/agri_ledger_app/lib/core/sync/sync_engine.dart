@@ -42,13 +42,14 @@ class SyncState {
     DateTime? lastSyncAt,
     String? lastError,
     int? pushedCount,
-  }) => SyncState(
-    status: status ?? this.status,
-    pendingCount: pendingCount ?? this.pendingCount,
-    lastSyncAt: lastSyncAt ?? this.lastSyncAt,
-    lastError: lastError ?? this.lastError,
-    pushedCount: pushedCount ?? this.pushedCount,
-  );
+  }) =>
+      SyncState(
+        status: status ?? this.status,
+        pendingCount: pendingCount ?? this.pendingCount,
+        lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+        lastError: lastError ?? this.lastError,
+        pushedCount: pushedCount ?? this.pushedCount,
+      );
 
   bool get isOnline => status != SyncStatus.offline;
   bool get isBusy => status == SyncStatus.syncing;
@@ -56,7 +57,7 @@ class SyncState {
 
 class SyncEngine extends ChangeNotifier {
   final AppRepository _repo;
-  
+
   SyncState _state = const SyncState();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
   Timer? _periodicTimer;
@@ -80,9 +81,8 @@ class SyncEngine extends ChangeNotifier {
   // ── INITIALIZATION ─────────────────────────────────────────────
   void _init() {
     // Watch network changes
-    _connectivitySub = Connectivity()
-      .onConnectivityChanged
-      .listen(_onConnectivityChanged);
+    _connectivitySub =
+        Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
 
     // Check current state immediately
     _checkConnectivity();
@@ -119,7 +119,8 @@ class SyncEngine extends ChangeNotifier {
   }
 
   void _onConnectivityChanged(List<ConnectivityResult> results) {
-    _handleConnectivity(results.isNotEmpty ? results.first : ConnectivityResult.none);
+    _handleConnectivity(
+        results.isNotEmpty ? results.first : ConnectivityResult.none);
   }
 
   void _handleConnectivity(ConnectivityResult result) {
@@ -142,7 +143,9 @@ class SyncEngine extends ChangeNotifier {
 
   // ── SYNC NOW (public) ──────────────────────────────────────────
   Future<SyncResult> syncNow({bool force = false}) async {
-    if (_state.isBusy) return SyncResult(success: false, message: 'Already syncing');
+    if (_state.isBusy) {
+      return SyncResult(success: false, message: 'Already syncing');
+    }
 
     // Debounce: don't sync more than once per 10 seconds
     if (!force && _lastSyncAttempt != null) {
@@ -219,22 +222,22 @@ class SyncEngine extends ChangeNotifier {
 
   // ── STATUS TEXT ────────────────────────────────────────────────
   String get statusText => switch (_state.status) {
-    SyncStatus.idle    => _state.lastSyncAt != null
-      ? 'Last sync: ${_formatTime(_state.lastSyncAt!)}'
-      : 'Not synced yet',
-    SyncStatus.syncing => 'Syncing...',
-    SyncStatus.success => 'Synced ✓',
-    SyncStatus.failed  => 'Sync failed — will retry',
-    SyncStatus.offline => '📵 Offline — saving locally',
-  };
+        SyncStatus.idle => _state.lastSyncAt != null
+            ? 'Last sync: ${_formatTime(_state.lastSyncAt!)}'
+            : 'Not synced yet',
+        SyncStatus.syncing => 'Syncing...',
+        SyncStatus.success => 'Synced ✓',
+        SyncStatus.failed => 'Sync failed — will retry',
+        SyncStatus.offline => '📵 Offline — saving locally',
+      };
 
   String get statusTextHindi => switch (_state.status) {
-    SyncStatus.idle    => 'तैयार है',
-    SyncStatus.syncing => 'Sync हो रहा है...',
-    SyncStatus.success => 'Sync हो गया ✓',
-    SyncStatus.failed  => 'Sync नहीं हुआ',
-    SyncStatus.offline => '📵 ऑफलाइन — डेटा सेव है',
-  };
+        SyncStatus.idle => 'तैयार है',
+        SyncStatus.syncing => 'Sync हो रहा है...',
+        SyncStatus.success => 'Sync हो गया ✓',
+        SyncStatus.failed => 'Sync नहीं हुआ',
+        SyncStatus.offline => '📵 ऑफलाइन — डेटा सेव है',
+      };
 
   String _formatTime(DateTime dt) {
     final now = DateTime.now();

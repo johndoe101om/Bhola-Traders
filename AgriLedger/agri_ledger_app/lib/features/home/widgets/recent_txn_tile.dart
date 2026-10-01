@@ -15,9 +15,11 @@ class RecentTxnTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = txnColor(txn.txnType);
     final isIn = txn.direction == 'in';
-    final label = AppConstants.txnTypeLabels[txn.txnType]?.split('\n').last ?? txn.txnType;
+    final label = AppConstants.txnTypeLabels[txn.txnType]?.split('\n').last ??
+        txn.txnType;
     final emoji = commodityEmoji(txn.commodity);
-    final dateStr = formatDate(DateTime.tryParse(txn.entryDate) ?? DateTime.now());
+    final dateStr =
+        formatDate(DateTime.tryParse(txn.entryDate) ?? DateTime.now());
     final createdAt = tryParseDateTime(txn.createdAt);
     final timeStr = createdAt != null ? formatTime(createdAt) : '';
 
@@ -26,7 +28,8 @@ class RecentTxnTile extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
-          width: 48, height: 48,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
@@ -40,13 +43,15 @@ class RecentTxnTile extends StatelessWidget {
             Expanded(
               child: Text(
                 txn.partyId, // Will be replaced with party name via join
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
               '${isIn ? '+' : '-'}${formatRupees(txn.amount)}',
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: color),
+              style: TextStyle(
+                  fontSize: 17, fontWeight: FontWeight.bold, color: color),
             ),
           ],
         ),
@@ -59,25 +64,30 @@ class RecentTxnTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(label,
-                style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600)),
+                  style: TextStyle(
+                      fontSize: 12, color: color, fontWeight: FontWeight.w600)),
             ),
             if (txn.commodity != null) ...[
               const SizedBox(width: 6),
               Text(txn.commodity!,
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  style: const TextStyle(
+                      fontSize: 12, color: AppTheme.textSecondary)),
             ],
             if (txn.quantityKg != null) ...[
               const SizedBox(width: 4),
               Text(formatKg(txn.quantityKg!),
-                style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                  style: const TextStyle(
+                      fontSize: 12, color: AppTheme.textSecondary)),
             ],
             const Spacer(),
             Text('$dateStr${timeStr.isNotEmpty ? ', $timeStr' : ''}',
-              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                style: const TextStyle(
+                    fontSize: 12, color: AppTheme.textSecondary)),
             if (txn.syncedAt == null)
               const Padding(
                 padding: EdgeInsets.only(left: 6),
-                child: Icon(Icons.cloud_off_rounded, size: 14, color: AppTheme.textHint),
+                child: Icon(Icons.cloud_off_rounded,
+                    size: 14, color: AppTheme.textHint),
               ),
           ],
         ),
@@ -111,12 +121,16 @@ class SyncBanner extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.cloud_off_rounded, color: Colors.orange[700], size: 20),
+              Icon(Icons.cloud_off_rounded,
+                  color: Colors.orange[700], size: 20),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   '$count एंट्री sync बाकी है / $count entries pending sync',
-                  style: TextStyle(fontSize: 14, color: Colors.orange[800], fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.orange[800],
+                      fontWeight: FontWeight.w600),
                 ),
               ),
               TextButton(
@@ -131,7 +145,8 @@ class SyncBanner extends ConsumerWidget {
                     }
                   }
                 },
-                child: const Text('Sync Now', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Sync Now',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -172,16 +187,21 @@ class SyncIconButton extends ConsumerWidget {
         ),
         if (count > 0)
           Positioned(
-            top: 6, right: 6,
+            top: 6,
+            right: 6,
             child: Container(
-              width: 16, height: 16,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
                 color: Colors.orange[400],
                 shape: BoxShape.circle,
               ),
               child: Center(
                 child: Text('$count',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold)),
               ),
             ),
           ),
