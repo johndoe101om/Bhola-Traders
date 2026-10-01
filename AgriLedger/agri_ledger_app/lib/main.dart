@@ -5,24 +5,38 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/constants/app_constants.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/screens/pin_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Load environment variables safely
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('[Main] Note: .env file not loaded ($e), using default constants');
+  }
 
-  // Initialize Supabase only if valid URL is provided (not the placeholder)
-  final supabaseUrl = dotenv.env['SUPABASE_URL'] ?? '';
-  final supabaseKey = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+  // Initialize Supabase with env or AppConstants fallback
+  final supabaseUrl = (dotenv.env['SUPABASE_URL']?.isNotEmpty == true)
+      ? dotenv.env['SUPABASE_URL']!
+      : AppConstants.defaultSupabaseUrl;
+  final supabaseKey = (dotenv.env['SUPABASE_ANON_KEY']?.isNotEmpty == true)
+      ? dotenv.env['SUPABASE_ANON_KEY']!
+      : AppConstants.defaultSupabaseAnonKey;
 
   if (supabaseUrl.isNotEmpty && supabaseUrl != 'YOUR_SUPABASE_PROJECT_URL') {
-    await Supabase.initialize(
-      url: supabaseUrl,
-      anonKey: supabaseKey,
-    );
+    try {
+      await Supabase.initialize(
+        url: supabaseUrl,
+        anonKey: supabaseKey,
+      );
+      debugPrint('[Main] Supabase initialized successfully at $supabaseUrl');
+    } catch (e) {
+      debugPrint('[Main] Supabase initialization error: $e');
+    }
   }
 
   // Force portrait mode — village-friendly

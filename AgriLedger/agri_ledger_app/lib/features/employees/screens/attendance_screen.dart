@@ -6,6 +6,7 @@ import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../data/local/local_database.dart';
 import '../../../data/repositories/providers.dart';
+import '../../../services/attendance_share_service.dart';
 import '../widgets/voice_reason_field.dart';
 
 class AttendanceScreen extends ConsumerStatefulWidget {
@@ -108,6 +109,33 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
       appBar: AppBar(
         title: const Text('हाजिरी भरें / Mark Attendance'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share_rounded, color: Colors.white),
+            tooltip: 'हाजिरी रिपोर्ट शेयर करें / Share Report',
+            onPressed: () {
+              final emps = employeesAsync.valueOrNull ?? [];
+              if (emps.isEmpty) return;
+              final statusMap = {
+                for (final e in emps) e.id: _empStates[e.id]?.status ?? 'present'
+              };
+              final reasonMap = {
+                for (final e in emps)
+                  e.id: _empStates[e.id]?.reasonController.text ?? ''
+              };
+              final otMap = {
+                for (final e in emps)
+                  e.id: _empStates[e.id]?.overtimeHours ?? 2.0
+              };
+              AttendanceShareService.showShareTeamSummaryDialog(
+                context: context,
+                employees: emps,
+                statusMap: statusMap,
+                reasonMap: reasonMap,
+                otMap: otMap,
+                date: _date,
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today_rounded, color: Colors.white),
             tooltip: 'Change Date',
@@ -244,6 +272,58 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                                 color: Colors.blue),
                           ],
                         ),
+                        const SizedBox(height: 10),
+                        // Quick Share Button for Daily Summary
+                        InkWell(
+                          onTap: () {
+                            final statusMap = {
+                              for (final e in employees)
+                                e.id: _empStates[e.id]?.status ?? 'present'
+                            };
+                            final reasonMap = {
+                              for (final e in employees)
+                                e.id: _empStates[e.id]?.reasonController.text ?? ''
+                            };
+                            final otMap = {
+                              for (final e in employees)
+                                e.id: _empStates[e.id]?.overtimeHours ?? 2.0
+                            };
+                            AttendanceShareService.showShareTeamSummaryDialog(
+                              context: context,
+                              employees: employees,
+                              statusMap: statusMap,
+                              reasonMap: reasonMap,
+                              otMap: otMap,
+                              date: _date,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFA5D6A7)),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.share,
+                                    size: 15, color: Color(0xFF2E7D32)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'आज की पूरी हाजिरी रिपोर्ट शेयर करें (WhatsApp / SMS)',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -266,6 +346,7 @@ class _AttendanceScreenState extends ConsumerState<AttendanceScreen> {
                         return _EmployeeAttendanceCard(
                           employee: emp,
                           state: state,
+                          date: _date,
                           onStatusChanged: (newStatus) {
                             setState(() {
                               state.status = newStatus;
@@ -360,11 +441,13 @@ class _QuickStat extends StatelessWidget {
 class _EmployeeAttendanceCard extends StatelessWidget {
   final EmployeesTableData employee;
   final _EmpAttState state;
+  final DateTime date;
   final ValueChanged<String> onStatusChanged;
 
   const _EmployeeAttendanceCard({
     required this.employee,
     required this.state,
+    required this.date,
     required this.onStatusChanged,
   });
 
@@ -392,7 +475,7 @@ class _EmployeeAttendanceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Employee Header
+            // Employee Header with Quick WhatsApp & SMS share
             Row(
               children: [
                 CircleAvatar(
@@ -423,6 +506,48 @@ class _EmployeeAttendanceCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                ),
+                // Quick WhatsApp Share Button
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble_outline,
+                      size: 20, color: Color(0xFF25D366)),
+                  tooltip: 'WhatsApp पर पर्ची भेजें',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    AttendanceShareService.showShareIndividualDialog(
+                      context: context,
+                      employee: employee,
+                      status: state.status,
+                      date: date,
+                      absenceReason: state.reasonController.text.trim().isNotEmpty
+                          ? state.reasonController.text.trim()
+                          : null,
+                      overtimeHours: state.status == 'overtime'
+                          ? state.overtimeHours
+                          : null,
+                    );
+                  },
+                ),
+                // Quick SMS / Message Share Button
+                IconButton(
+                  icon: Icon(Icons.sms_outlined,
+                      size: 20, color: Colors.blue.shade700),
+                  tooltip: 'SMS संदेश भेजें',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () {
+                    AttendanceShareService.showShareIndividualDialog(
+                      context: context,
+                      employee: employee,
+                      status: state.status,
+                      date: date,
+                      absenceReason: state.reasonController.text.trim().isNotEmpty
+                          ? state.reasonController.text.trim()
+                          : null,
+                      overtimeHours: state.status == 'overtime'
+                          ? state.overtimeHours
+                          : null,
+                    );
+                  },
                 ),
               ],
             ),

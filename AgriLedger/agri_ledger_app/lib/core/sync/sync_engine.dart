@@ -60,6 +60,7 @@ class SyncEngine extends ChangeNotifier {
 
   SyncState _state = const SyncState();
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+  StreamSubscription<int>? _pendingSub;
   Timer? _periodicTimer;
   Timer? _retryTimer;
   bool _disposed = false;
@@ -83,6 +84,11 @@ class SyncEngine extends ChangeNotifier {
     // Watch network changes
     _connectivitySub =
         Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+
+    // Watch pending sync count from local database
+    _pendingSub = _repo.watchPendingSyncCount().listen((count) {
+      _updateState(_state.copyWith(pendingCount: count));
+    });
 
     // Check current state immediately
     _checkConnectivity();
@@ -110,8 +116,11 @@ class SyncEngine extends ChangeNotifier {
   // ── CONNECTIVITY ───────────────────────────────────────────────
   Future<void> _checkConnectivity() async {
     try {
-      final result = await Connectivity().checkConnectivity();
-      _handleConnectivity(result.first);
+      final results = await Connectivity().checkConnectivity();
+      final hasNet = results.any((r) => r != ConnectivityResult.none);
+      _handleConnectivity(hasNet
+          ? results.firstWhere((r) => r != ConnectivityResult.none)
+          : ConnectivityResult.none);
     } catch (e) {
       debugPrint('[SyncEngine] Connectivity check failed: $e');
       _handleConnectivity(ConnectivityResult.none);
@@ -119,8 +128,10 @@ class SyncEngine extends ChangeNotifier {
   }
 
   void _onConnectivityChanged(List<ConnectivityResult> results) {
-    _handleConnectivity(
-        results.isNotEmpty ? results.first : ConnectivityResult.none);
+    final hasNet = results.any((r) => r != ConnectivityResult.none);
+    _handleConnectivity(hasNet
+        ? results.firstWhere((r) => r != ConnectivityResult.none)
+        : ConnectivityResult.none);
   }
 
   void _handleConnectivity(ConnectivityResult result) {
@@ -159,8 +170,8 @@ class SyncEngine extends ChangeNotifier {
     _updateState(_state.copyWith(status: SyncStatus.syncing));
 
     try {
-      // Push pending local changes
-      final result = await _repo.syncNow();
+      // Push pending local changes & pull server updates
+      final result = await _repo.syncNow(force: force);
 
       if (result.success) {
         final now = DateTime.now();
@@ -252,6 +263,7 @@ class SyncEngine extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _connectivitySub?.cancel();
+    _pendingSub?.cancel();
     _periodicTimer?.cancel();
     _retryTimer?.cancel();
     super.dispose();

@@ -8,6 +8,7 @@ import '../../../core/utils/app_utils.dart';
 import '../../../data/local/local_database.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../services/printing/print_service.dart';
+import '../../../services/attendance_share_service.dart';
 import '../../receipts/screens/printer_setup_screen.dart';
 import 'add_employee_screen.dart';
 import 'attendance_calendar_screen.dart';
@@ -111,6 +112,168 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen>
                         context, employee, range.start, range.end);
                   }
                 },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showShareWorkerSummaryDialog(
+    BuildContext context,
+    EmployeesTableData employee,
+    Map<String, dynamic>? ledger,
+  ) {
+    final earned = (ledger?['grossEarned'] ?? 0.0) as double;
+    final paid = (ledger?['totalPaid'] ?? 0.0) as double;
+    final balance = (ledger?['balance'] ?? 0.0) as double;
+    final daysPresent = ledger?['daysPresent'] ?? 0;
+    final halfDays = ledger?['halfDays'] ?? 0;
+
+    final buffer = StringBuffer();
+    buffer.writeln('🌾 *भोला ट्रेडर्स / BHOLA TRADERS* 🌾');
+    buffer.writeln('📋 *कर्मचारी खाता व हाजिरी विवरण*');
+    buffer.writeln('--------------------------------');
+    buffer.writeln('👤 *नाम:* ${employee.name}');
+    if (employee.phone != null && employee.phone!.isNotEmpty) {
+      buffer.writeln('📞 *फ़ोन:* ${employee.phone}');
+    }
+    buffer.writeln(
+        '💰 *दैनिक वेतन दर:* ₹${employee.dailyWageRate.toStringAsFixed(0)}/दिन');
+    buffer.writeln('--------------------------------');
+    buffer.writeln('📊 *हाजिरी सारांश:*');
+    buffer.writeln('✅ उपस्थित दिन: $daysPresent');
+    if (halfDays > 0) buffer.writeln('⏳ आधा दिन: $halfDays');
+    buffer.writeln('💵 कुल अर्जित वेतन: ₹${earned.toStringAsFixed(0)}');
+    buffer.writeln('💸 दिया गया भुगतान: ₹${paid.toStringAsFixed(0)}');
+    buffer.writeln('--------------------------------');
+    if (balance > 0) {
+      buffer.writeln('📌 *बकाया देना है (Due):* ₹${balance.toStringAsFixed(0)}');
+    } else if (balance < 0) {
+      buffer.writeln(
+          '📌 *एडवांस बाकी है (Advance):* ₹${balance.abs().toStringAsFixed(0)}');
+    } else {
+      buffer.writeln('📌 *हिसाब बराबर (Settled)*');
+    }
+    buffer.writeln('--------------------------------');
+    buffer.writeln('भोला ट्रेडर्स (मंडी रोड)');
+    buffer.writeln('📞 किसी भी जानकारी के लिए संपर्क करें।');
+
+    final message = buffer.toString();
+    final phone = employee.phone;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'खाता विवरण शेयर करें / Share Summary',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              Text(
+                '${employee.name} ${phone != null ? '($phone)' : ''}',
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 180),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                        fontSize: 12, height: 1.4, fontFamily: 'monospace'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text('WhatsApp',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AttendanceShareService.sendViaWhatsApp(
+                            phone: phone, message: message);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.sms_outlined, size: 18),
+                      label: const Text('SMS / संदेश',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AttendanceShareService.sendViaSms(
+                            phone: phone, message: message);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.share, size: 18),
+                  label: const Text('अन्य ऐप में भेजें / Other Apps',
+                      style: TextStyle(fontSize: 13)),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Share.share(message);
+                  },
+                ),
               ),
             ],
           ),
@@ -370,14 +533,12 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen>
                             Expanded(
                               child: OutlinedButton.icon(
                                 icon: const Icon(Icons.share,
-                                    size: 16, color: Colors.green),
-                                label: const Text('WhatsApp',
+                                    size: 16, color: Color(0xFF25D366)),
+                                label: const Text('WhatsApp / SMS',
                                     style: TextStyle(fontSize: 12)),
                                 onPressed: () {
-                                  // ignore: deprecated_member_use
-                                  Share.share(
-                                    'नमस्ते ${employee.name},\nभोला ट्रेडर्स से आपका हाजिरी व वेतन विवरण।',
-                                  );
+                                  _showShareWorkerSummaryDialog(
+                                      context, employee, ledgerAsync.valueOrNull);
                                 },
                               ),
                             ),

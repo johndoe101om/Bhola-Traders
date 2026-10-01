@@ -1,13 +1,15 @@
 // lib/data/remote/supabase_sync_service.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../local/local_database.dart';
 
 class SupabaseSyncService {
-  final SupabaseClient? _client;
+  final SupabaseClient? _injectedClient;
 
-  SupabaseSyncService([SupabaseClient? client])
-      : _client = client ?? _safeGetClient();
+  SupabaseSyncService([SupabaseClient? client]) : _injectedClient = client;
+
+  SupabaseClient? get _client => _injectedClient ?? _safeGetClient();
 
   static SupabaseClient? _safeGetClient() {
     try {
@@ -23,33 +25,45 @@ class SupabaseSyncService {
 
   Future<bool> pushParty(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushParty skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('parties').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushParty error: $e');
       return false;
     }
   }
 
   Future<bool> pushTransaction(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushTransaction skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('transactions').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushTransaction error: $e');
       return false;
     }
   }
 
   Future<bool> pushBagMovement(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushBagMovement skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('bag_movements').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushBagMovement error: $e');
       return false;
     }
   }
@@ -60,10 +74,11 @@ class SupabaseSyncService {
     try {
       await client.from('transactions').update({
         'is_deleted': true,
-        'updated_at': DateTime.now().toIso8601String()
+        'updated_at': DateTime.now().toUtc().toIso8601String()
       }).eq('id', id);
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] deleteTransaction error: $e');
       return false;
     }
   }
@@ -76,21 +91,26 @@ class SupabaseSyncService {
     try {
       await client.from('bag_movements').update({
         'is_deleted': true,
-        'updated_at': DateTime.now().toIso8601String()
+        'updated_at': DateTime.now().toUtc().toIso8601String()
       }).eq('id', id);
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] deleteBagMovement error: $e');
       return false;
     }
   }
 
   Future<bool> pushEmployee(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushEmployee skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('employees').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushEmployee error: $e');
       return false;
     }
   }
@@ -101,17 +121,21 @@ class SupabaseSyncService {
     try {
       await client.from('employees').update({
         'is_active': false,
-        'updated_at': DateTime.now().toIso8601String()
+        'updated_at': DateTime.now().toUtc().toIso8601String()
       }).eq('id', id);
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] deleteEmployee error: $e');
       return false;
     }
   }
 
   Future<bool> pushAttendance(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushAttendance skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('attendances').upsert(
             _mapToSnakeCase(data),
@@ -119,17 +143,34 @@ class SupabaseSyncService {
           );
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushAttendance error: $e');
       return false;
     }
   }
 
   Future<bool> pushEmployeePayment(Map<String, dynamic> data) async {
     final client = _client;
-    if (client == null) return false;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pushEmployeePayment skipped: client not configured');
+      return false;
+    }
     try {
       await client.from('employee_payments').upsert(_mapToSnakeCase(data));
       return true;
     } catch (e) {
+      debugPrint('[SupabaseSync] pushEmployeePayment error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteEmployeePayment(String id) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('employee_payments').delete().eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('[SupabaseSync] deleteEmployeePayment error: $e');
       return false;
     }
   }
@@ -172,7 +213,11 @@ class SupabaseSyncService {
           success = await pushAttendance(payload);
           break;
         case 'employee_payment':
-          success = await pushEmployeePayment(payload);
+          if (item.operation == 'delete') {
+            success = await deleteEmployeePayment(item.entityId);
+          } else {
+            success = await pushEmployeePayment(payload);
+          }
           break;
       }
 
@@ -198,7 +243,10 @@ class SupabaseSyncService {
     };
 
     final client = _client;
-    if (client == null) return results;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pullChanges skipped: client not configured');
+      return results;
+    }
 
     try {
       var queryParties = client.from('parties').select();
@@ -208,7 +256,7 @@ class SupabaseSyncService {
       var queryAttendances = client.from('attendances').select();
       var queryPayments = client.from('employee_payments').select();
 
-      if (lastSyncTimestamp != null) {
+      if (lastSyncTimestamp != null && lastSyncTimestamp.isNotEmpty) {
         queryParties = queryParties.gt('updated_at', lastSyncTimestamp);
         queryTxns = queryTxns.gt('updated_at', lastSyncTimestamp);
         queryBags = queryBags.gt('updated_at', lastSyncTimestamp);
@@ -246,8 +294,16 @@ class SupabaseSyncService {
           results['attendances']!.map(_mapToCamelCase).toList();
       results['employee_payments'] =
           results['employee_payments']!.map(_mapToCamelCase).toList();
+
+      debugPrint('[SupabaseSync] Pull complete: '
+          '${results['parties']!.length} parties, '
+          '${results['transactions']!.length} txns, '
+          '${results['bag_movements']!.length} bags, '
+          '${results['employees']!.length} employees, '
+          '${results['attendances']!.length} attendances, '
+          '${results['employee_payments']!.length} payments');
     } catch (e) {
-      // Silently fail or use a logger
+      debugPrint('[SupabaseSync] pullChanges error: $e');
     }
 
     return results;

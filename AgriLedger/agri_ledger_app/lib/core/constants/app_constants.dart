@@ -114,4 +114,14 @@ class AppConstants {
     'deduction': 'कटौती',
     'settlement': 'हिसाब',
   };
+
+  // ── SUPABASE FALLBACK CONFIG ─────────────────────────────────
+  static const String defaultSupabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://mmfrilhikotpssbtgees.supabase.co',
+  );
+  static const String defaultSupabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: 'sb_publishable_-nhZTWlt7wMb3ytl1d03Sw_rA_W1ZgG',
+  );
 }

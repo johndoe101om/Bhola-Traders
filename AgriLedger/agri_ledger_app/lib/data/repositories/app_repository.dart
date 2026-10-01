@@ -439,8 +439,8 @@ class AppRepository {
 
   Stream<int> watchPendingSyncCount() => _local.watchPendingSyncCount();
 
-  Future<SyncResult> syncNow() async {
-    if (!await _isOnline) {
+  Future<SyncResult> syncNow({bool force = false}) async {
+    if (!force && !await _isOnline) {
       return SyncResult(success: false, message: 'No internet connection');
     }
 
@@ -455,7 +455,7 @@ class AppRepository {
         if (acceptedIds.contains(item.entityId)) {
           await _local.removeSyncItem(item.id);
           // Mark synced locally if not already
-          final now = DateTime.now().toIso8601String();
+          final now = DateTime.now().toUtc().toIso8601String();
           if (item.entityType == 'party') {
             await _local.upsertParty(PartiesTableCompanion(
                 id: Value(item.entityId), syncedAt: Value(now)));
@@ -473,7 +473,8 @@ class AppRepository {
           } else if (item.entityType == 'attendance') {
             await _local.upsertAttendance(AttendancesTableCompanion(
                 id: Value(item.entityId), syncedAt: Value(now)));
-          } else if (item.entityType == 'employee_payment') {
+          } else if (item.entityType == 'employee_payment' &&
+              item.operation != 'delete') {
             await _local.upsertEmployeePayment(EmployeePaymentsTableCompanion(
                 id: Value(item.entityId), syncedAt: Value(now)));
           }
@@ -513,8 +514,6 @@ class AppRepository {
         final entityId = p['id'] as String;
         final serverIsActive = p['isActive'] == true || p['isActive'] == 1;
 
-        // If server says party is deactivated, apply locally AND
-        // remove any stale sync queue entries that would re-push it
         if (!serverIsActive) {
           await _local.upsertParty(_mapToPartyCompanion(p));
           await _local.removeSyncQueueItemsForEntity('party', entityId);
@@ -522,8 +521,6 @@ class AppRepository {
           continue;
         }
 
-        // Timestamp conflict check: if local has a pending change with
-        // a NEWER timestamp, skip the server version (local wins)
         if (pendingEntityIds.contains(entityId)) {
           final serverUpdatedAt = p['updatedAt'] as String?;
           final localUpdatedAt = pendingEntityTimestamps[entityId];
@@ -548,8 +545,6 @@ class AppRepository {
         final serverIsDeleted =
             t['isDeleted'] == true || t['isDeleted'] == 1;
 
-        // If server says transaction is deleted, soft-delete locally AND
-        // remove any stale sync queue entries to prevent resurrection
         if (serverIsDeleted) {
           await _local.softDeleteTransaction(entityId);
           await _local.removeSyncQueueItemsForEntity(
@@ -558,7 +553,6 @@ class AppRepository {
           continue;
         }
 
-        // Timestamp conflict check
         if (pendingEntityIds.contains(entityId)) {
           final serverUpdatedAt = t['updatedAt'] as String?;
           final localUpdatedAt = pendingEntityTimestamps[entityId];
@@ -583,8 +577,6 @@ class AppRepository {
         final serverIsDeleted =
             b['isDeleted'] == true || b['isDeleted'] == 1;
 
-        // If server says bag movement is deleted, soft-delete locally AND
-        // remove any stale sync queue entries to prevent resurrection
         if (serverIsDeleted) {
           await _local.softDeleteBagMovement(entityId);
           await _local.removeSyncQueueItemsForEntity(
@@ -593,7 +585,6 @@ class AppRepository {
           continue;
         }
 
-        // Timestamp conflict check
         if (pendingEntityIds.contains(entityId)) {
           final serverUpdatedAt = b['updatedAt'] as String?;
           final localUpdatedAt = pendingEntityTimestamps[entityId];
@@ -611,8 +602,80 @@ class AppRepository {
       }
     }
 
+    // ── MERGE EMPLOYEES ──
+    for (final e in pulledData['employees']!) {
+      try {
+        final entityId = e['id'] as String;
+        final serverIsActive = e['isActive'] == true || e['isActive'] == 1;
+
+        if (!serverIsActive) {
+          await _local.softDeleteEmployee(entityId);
+          await _local.removeSyncQueueItemsForEntity('employee', entityId);
+          pulled++;
+          continue;
+        }
+
+        if (pendingEntityIds.contains(entityId)) {
+          final serverUpdatedAt = e['updatedAt'] as String?;
+          final localUpdatedAt = pendingEntityTimestamps[entityId];
+          if (serverUpdatedAt != null && localUpdatedAt != null) {
+            if (localUpdatedAt.compareTo(serverUpdatedAt) > 0) {
+              continue; // Local is newer — skip server version
+            }
+          }
+        }
+
+        await _local.upsertEmployee(_mapToEmployeeCompanion(e));
+        pulled++;
+      } catch (e) {
+        // Skip malformed employee
+      }
+    }
+
+    // ── MERGE ATTENDANCES ──
+    for (final a in pulledData['attendances']!) {
+      try {
+        final entityId = a['id'] as String;
+        if (pendingEntityIds.contains(entityId)) {
+          final serverUpdatedAt = a['updatedAt'] as String?;
+          final localUpdatedAt = pendingEntityTimestamps[entityId];
+          if (serverUpdatedAt != null && localUpdatedAt != null) {
+            if (localUpdatedAt.compareTo(serverUpdatedAt) > 0) {
+              continue; // Local is newer — skip server version
+            }
+          }
+        }
+
+        await _local.upsertAttendance(_mapToAttendanceCompanion(a));
+        pulled++;
+      } catch (e) {
+        // Skip malformed attendance
+      }
+    }
+
+    // ── MERGE EMPLOYEE PAYMENTS ──
+    for (final ep in pulledData['employee_payments']!) {
+      try {
+        final entityId = ep['id'] as String;
+        if (pendingEntityIds.contains(entityId)) {
+          final serverUpdatedAt = ep['updatedAt'] as String?;
+          final localUpdatedAt = pendingEntityTimestamps[entityId];
+          if (serverUpdatedAt != null && localUpdatedAt != null) {
+            if (localUpdatedAt.compareTo(serverUpdatedAt) > 0) {
+              continue; // Local is newer — skip server version
+            }
+          }
+        }
+
+        await _local.upsertEmployeePayment(_mapToEmployeePaymentCompanion(ep));
+        pulled++;
+      } catch (e) {
+        // Skip malformed employee payment
+      }
+    }
+
     await prefs.setString(
-        'last_sync_timestamp', DateTime.now().toIso8601String());
+        'last_sync_timestamp', DateTime.now().toUtc().toIso8601String());
 
     return SyncResult(success: true, pushed: pushed, pulled: pulled);
   }
@@ -629,7 +692,7 @@ class AppRepository {
       isActive: Value(data['isActive'] == true || data['isActive'] == 1),
       createdAt: Value(data['createdAt']),
       updatedAt: Value(data['updatedAt']),
-      syncedAt: Value(DateTime.now().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
     );
   }
 
@@ -653,7 +716,7 @@ class AppRepository {
       entryDate: Value(data['entryDate']),
       createdAt: Value(data['createdAt']),
       updatedAt: Value(data['updatedAt']),
-      syncedAt: Value(DateTime.now().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
       isDeleted: Value(data['isDeleted'] == true || data['isDeleted'] == 1),
     );
   }
@@ -669,8 +732,71 @@ class AppRepository {
       entryDate: Value(data['entryDate']),
       createdAt: Value(data['createdAt']),
       updatedAt: Value(data['updatedAt']),
-      syncedAt: Value(DateTime.now().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
       isDeleted: Value(data['isDeleted'] == true || data['isDeleted'] == 1),
+    );
+  }
+
+  EmployeesTableCompanion _mapToEmployeeCompanion(Map<String, dynamic> data) {
+    return EmployeesTableCompanion(
+      id: Value(data['id']),
+      name: Value(data['name']),
+      phone: Value(data['phone']),
+      email: Value(data['email']),
+      dailyWageRate: Value((data['dailyWageRate'] as num?)?.toDouble() ?? 0.0),
+      aadhaarNumber: Value(data['aadhaarNumber']),
+      address: Value(data['address']),
+      joiningDate: Value(data['joiningDate'] != null
+          ? data['joiningDate'].toString().substring(0, 10)
+          : DateTime.now().toIso8601String().substring(0, 10)),
+      employeeType: Value(data['employeeType'] ?? 'labour'),
+      teamGroup: Value(data['teamGroup']),
+      isActive: Value(data['isActive'] == true || data['isActive'] == 1),
+      emergencyContact: Value(data['emergencyContact']),
+      notes: Value(data['notes']),
+      createdAt: Value(data['createdAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      updatedAt: Value(data['updatedAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
+    );
+  }
+
+  AttendancesTableCompanion _mapToAttendanceCompanion(Map<String, dynamic> data) {
+    return AttendancesTableCompanion(
+      id: Value(data['id']),
+      employeeId: Value(data['employeeId']),
+      attendanceDate: Value(data['attendanceDate'] != null
+          ? data['attendanceDate'].toString().substring(0, 10)
+          : DateTime.now().toIso8601String().substring(0, 10)),
+      status: Value(data['status'] ?? 'present'),
+      checkInTime: Value(data['checkInTime']),
+      checkOutTime: Value(data['checkOutTime']),
+      absenceReason: Value(data['absenceReason']),
+      voiceRaw: Value(data['voiceRaw']),
+      overtimeHours: Value((data['overtimeHours'] as num?)?.toDouble()),
+      notificationSent: Value(data['notificationSent'] == true || data['notificationSent'] == 1),
+      notes: Value(data['notes']),
+      createdAt: Value(data['createdAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      updatedAt: Value(data['updatedAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
+    );
+  }
+
+  EmployeePaymentsTableCompanion _mapToEmployeePaymentCompanion(Map<String, dynamic> data) {
+    return EmployeePaymentsTableCompanion(
+      id: Value(data['id']),
+      employeeId: Value(data['employeeId']),
+      paymentDate: Value(data['paymentDate'] != null
+          ? data['paymentDate'].toString().substring(0, 10)
+          : DateTime.now().toIso8601String().substring(0, 10)),
+      amount: Value((data['amount'] as num?)?.toDouble() ?? 0.0),
+      paymentMode: Value(data['paymentMode'] ?? 'cash'),
+      paymentType: Value(data['paymentType'] ?? 'wage'),
+      referenceNumber: Value(data['referenceNumber']),
+      notes: Value(data['notes']),
+      voiceRaw: Value(data['voiceRaw']),
+      createdAt: Value(data['createdAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      updatedAt: Value(data['updatedAt'] ?? DateTime.now().toUtc().toIso8601String()),
+      syncedAt: Value(DateTime.now().toUtc().toIso8601String()),
     );
   }
 
@@ -744,7 +870,18 @@ class AppRepository {
       'updated_at': now,
     };
 
-    await _queueForSync('employee', id, 'insert', payload);
+    // Try to push immediately if online, else queue
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.pushEmployee(payload);
+        await _local.upsertEmployee(companion.copyWith(syncedAt: Value(now)));
+      } catch (_) {
+        await _queueForSync('employee', id, 'insert', payload);
+      }
+    } else {
+      await _queueForSync('employee', id, 'insert', payload);
+    }
+
     return id;
   }
 
@@ -767,7 +904,7 @@ class AppRepository {
     final joinStr =
         (joiningDate ?? DateTime.now()).toIso8601String().substring(0, 10);
 
-    await _local.upsertEmployee(EmployeesTableCompanion(
+    final companion = EmployeesTableCompanion(
       id: Value(id),
       name: Value(name),
       dailyWageRate: Value(dailyWageRate),
@@ -783,7 +920,8 @@ class AppRepository {
       notes: Value(notes),
       updatedAt: Value(now),
       syncedAt: const Value(null),
-    ));
+    );
+    await _local.upsertEmployee(companion);
 
     final payload = {
       'id': id,
@@ -802,12 +940,32 @@ class AppRepository {
       'updated_at': now,
     };
 
-    await _queueForSync('employee', id, 'update', payload);
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.pushEmployee(payload);
+        await _local.upsertEmployee(EmployeesTableCompanion(
+          id: Value(id),
+          syncedAt: Value(now),
+        ));
+      } catch (_) {
+        await _queueForSync('employee', id, 'update', payload);
+      }
+    } else {
+      await _queueForSync('employee', id, 'update', payload);
+    }
   }
 
   Future<void> deleteEmployee(String id) async {
     await _local.softDeleteEmployee(id);
-    await _queueForSync('employee', id, 'delete', {'id': id});
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.deleteEmployee(id);
+      } catch (_) {
+        await _queueForSync('employee', id, 'delete', {'id': id});
+      }
+    } else {
+      await _queueForSync('employee', id, 'delete', {'id': id});
+    }
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -872,8 +1030,18 @@ class AppRepository {
       'updated_at': now,
     };
 
-    await _queueForSync('attendance', targetId,
-        existing != null ? 'update' : 'insert', payload);
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.pushAttendance(payload);
+        await _local.upsertAttendance(companion.copyWith(syncedAt: Value(now)));
+      } catch (_) {
+        await _queueForSync('attendance', targetId,
+            existing != null ? 'update' : 'insert', payload);
+      }
+    } else {
+      await _queueForSync('attendance', targetId,
+          existing != null ? 'update' : 'insert', payload);
+    }
     return targetId;
   }
 
@@ -968,7 +1136,17 @@ class AppRepository {
       'updated_at': now,
     };
 
-    await _queueForSync('employee_payment', id, 'insert', payload);
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.pushEmployeePayment(payload);
+        await _local.upsertEmployeePayment(
+            companion.copyWith(syncedAt: Value(now)));
+      } catch (_) {
+        await _queueForSync('employee_payment', id, 'insert', payload);
+      }
+    } else {
+      await _queueForSync('employee_payment', id, 'insert', payload);
+    }
     return id;
   }
 
@@ -997,7 +1175,15 @@ class AppRepository {
 
   Future<void> deleteEmployeePayment(String id) async {
     await _local.deleteEmployeePayment(id);
-    await _queueForSync('employee_payment', id, 'delete', {'id': id});
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.deleteEmployeePayment(id);
+      } catch (_) {
+        await _queueForSync('employee_payment', id, 'delete', {'id': id});
+      }
+    } else {
+      await _queueForSync('employee_payment', id, 'delete', {'id': id});
+    }
   }
 
   // ──────────────────────────────────────────────────────────────
