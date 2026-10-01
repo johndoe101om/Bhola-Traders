@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase Memo - Bhola Traders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Specific Fix for Printing */
+        @media print {
+            .no-print { display: none !important; }
+            body { 
+                background: white !important; 
+                padding: 0 !important; 
+                margin: 0 !important;
+            }
+            .memo-container { 
+                border: none !important; 
+                box-shadow: none !important; 
+                width: 100% !important;
+                margin: 0 !important;
+                background-color: #fceea7 !important; /* Force yellow background in print */
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            @page {
+                size: auto;
+                margin: 0mm;
+            }
+        }
+
+        body {
+            background-color: #e5e7eb;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .memo-container {
+            background-color: #fceea7;
+            width: 800px;
+            padding: 40px;
+            margin: 20px 0;
+            border: 1px solid #c4b05a;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 1050px;
+        }
+
+        .dotted-line {
+            border-bottom: 1px dotted #000;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .note-box {
+            border: 1.5px solid #000;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 20px 0;
+            font-size: 12px;
+            text-align: center;
+            line-height: 1.5;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-img {
+            max-width: 130px;
+            max-height: 130px;
+            object-fit: contain;
+        }
+
+        .brand-font {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            letter-spacing: -1px;
+        }
+
+        .calculation-space {
+            min-height: 400px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+
+
+    <div class="memo-container" id="memo">
+        <!-- Top Header Section -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="w-32">
+                <img src="bhola_traders_logo.png" alt="Bhola Traders Logo" class="logo-img" onerror="this.style.visibility='hidden'">
+            </div>
+            <div class="text-center flex-1">
+                <div class="inline-block border-2 border-black rounded-full px-6 py-0.5 text-xs font-black mb-2">PURCHASE MEMO</div>
+                <h1 class="text-5xl font-black brand-font tracking-tight text-gray-900 uppercase">BHOLA TRADERS</h1>
+                <p class="text-sm font-bold mt-1">Deals in : Food Grains, Pulse, Jute etc.</p>
+            </div>
+            <div class="text-right text-sm font-black w-48">
+                <p>Mob. : 9582863135</p>
+                <p class="text-[10px] text-gray-700 font-sans">(10:00 AM to 6:00 PM)</p>
+            </div>
+        </div>
+
+        <!-- Location & GST -->
+        <div class="text-center text-xs font-bold mb-6 pb-4 border-b border-black border-opacity-20">
+            At. & P.O. : HULAS (SUPAUL) PIN : 852111 (BIHAR)
+            <div class="mt-1 text-sm">GSTIN: 10AAAAA0000A1Z5</div>
+        </div>
+
+        <!-- Customer/Date Info -->
+        <div class="flex justify-between mb-6 font-bold text-lg">
+            <div>
+                Sl. No. : <span class="dotted-line w-24"></span>
+            </div>
+            <div>
+                Date : <span class="dotted-line w-40"></span>
+            </div>
+        </div>
+        
+        <div class="mb-6 font-bold text-lg flex items-center">
+            P. Name : <span class="dotted-line flex-1 ml-2"></span>
+        </div>
+
+        <!-- Note Box -->
+        <div class="note-box font-bold bg-yellow-100 bg-opacity-30">
+            नोट : सभी व्यवसाय से अनुरोध है कि बकाया रकम की राशि 72 घंटे के अन्दर नहीं लगा है।<br>
+            तो आप 12 बजे के बाद और 4 बजे से पहले फोन करें। अन्यथा पेमेंट सम्बन्धी कोई बात नहीं होगी।<br>
+            यदि 24 घंटा में पेमेंट लेना है तो 1 प्रतिशत पेमेंट कट कर मिलेगा।
+        </div>
+
+        <!-- Entry Fields & Calculation Area -->
+        <div class="mt-10">
+            <div class="grid grid-cols-2 gap-x-12">
+                <!-- Data Entry Column -->
+                <div class="space-y-6 font-bold text-xl">
+                    <div class="flex items-end">
+                        RST No. : <span class="dotted-line flex-1 ml-2"></span>
+                    </div>
+                    <div class="flex items-end">
+                        Load Gari : <span class="dotted-line flex-1 ml-2"></span>
+                    </div>
+                    <div class="flex items-end">
+                        Khali Gari : <span class="dotted-line flex-1 ml-2"></span>
+                    </div>
+                </div>
+
+                <!-- Rates Column -->
+                <div class="space-y-6 font-bold text-xl">
+                    <div class="flex items-end">
+                        Rate Rs. : <span class="dotted-line flex-1 ml-2"></span>
+                    </div>
+                    <div class="flex items-end">
+                        Maschar % : <span class="dotted-line flex-1 ml-2"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MANUAL CALCULATION SPACE -->
+            <div class="calculation-space mt-12 relative border-l border-dashed border-gray-400 border-opacity-30">
+                <div class="absolute top-0 right-0 text-[10px] text-gray-400 italic font-sans pr-2"> </div>
+            </div>
+        </div>
+
+        <!-- Totals Line / Footer Signatures -->
+        <div class="absolute bottom-16 left-10 right-10 flex justify-between items-end">
+            <div class="text-center">
+                <div class="w-48 border-t-2 border-black pt-1 font-bold italic text-sm">Customer's Signatre</div>
+            </div>
+            <div class="text-center">
+                <div class="w-64 border-t-2 border-black pt-1 font-bold italic text-sm">
+                    <p class="text-[10px] not-italic mb-1 font-black uppercase">For BHOLA TRADERS</p>
+                    Authorised Signatre
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Border Accent -->
+        <div class="absolute bottom-6 left-0 right-0 text-[9px] text-gray-600 text-center uppercase tracking-[0.2em] font-sans">
+            Trusted Quality Since Establishment • Bhola Traders Hulas
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,11 +1,53 @@
+# Dependencies
 node_modules/
+.pub-cache/
+.pub/
+
+# Test & Playwright
 .playwright-cli/
 test-results/
 playwright-report/
+
+# Agents & tooling
 .agents/
+
+# .NET build outputs
 bin/
 obj/
+**/bin/
+**/obj/
 *.user
 *.suo
 .vs/
+
+# Databases
+*.db
+*.db-wal
+*.db-shm
+
+# Secrets & Configuration (MANDATORY SECURITY RULES)
+appsettings.Production.json
+appsettings.Staging.json
+**/secrets.json
+*.pfx
 .env
+.env.*
+!.env.example
+
+# Flutter / Android build outputs
+build/
+**/build/
+.dart_tool/
+**/.dart_tool/
+*.apk
+*.aab
+/android/app/debug
+/android/app/profile
+/android/app/release
+.flutter-plugins-dependencies
+
+# OS files
+.DS_Store
+Thumbs.db
+temp_*
+*.tmp
