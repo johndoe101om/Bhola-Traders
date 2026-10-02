@@ -18,7 +18,13 @@ class AppConstants {
     'cash_in',
     'cash_out'
   ];
-  static const List<String> commodities = ['rice', 'wheat', 'maize'];
+  static const List<String> commodities = [
+    'rice',
+    'wheat',
+    'maize',
+    'jute',
+    'moong_dal',
+  ];
   static const List<String> paymentModes = ['cash', 'upi', 'credit'];
   static const List<String> bagMovements = ['given', 'returned'];
 
@@ -38,8 +44,26 @@ class AppConstants {
 
   static const Map<String, String> commodityLabels = {
     'rice': 'चावल\nRice',
-    'wheat': 'गेहूं\nWheat',
+    'wheat': 'गेहूँ\nWheat',
     'maize': 'मक्का\nMaize',
+    'jute': 'जूट\nJute',
+    'moong_dal': 'मूँग दाल\nMoong Dal',
+  };
+
+  static const Map<String, String> commodityHindi = {
+    'rice': 'चावल',
+    'wheat': 'गेहूँ',
+    'maize': 'मक्का',
+    'jute': 'जूट',
+    'moong_dal': 'मूँग दाल',
+  };
+
+  static const Map<String, String> commodityEnglish = {
+    'rice': 'Rice',
+    'wheat': 'Wheat',
+    'maize': 'Maize',
+    'jute': 'Jute',
+    'moong_dal': 'Moong Dal',
   };
 
   static const Map<String, String> paymentModeLabels = {
@@ -65,6 +89,8 @@ class AppConstants {
     'rice': '🌾',
     'wheat': '🌿',
     'maize': '🌽',
+    'jute': '🧵',
+    'moong_dal': '🫘',
   };
 
   // ── EMPLOYEES ────────────────────────────────────────────────

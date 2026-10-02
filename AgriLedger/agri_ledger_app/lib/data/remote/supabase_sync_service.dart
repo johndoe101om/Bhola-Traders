@@ -175,6 +175,18 @@ class SupabaseSyncService {
     }
   }
 
+  Future<bool> deleteAttendance(String id) async {
+    final client = _client;
+    if (client == null) return false;
+    try {
+      await client.from('attendances').delete().eq('id', id);
+      return true;
+    } catch (e) {
+      debugPrint('[SupabaseSync] deleteAttendance error: $e');
+      return false;
+    }
+  }
+
   // ── PROCESS QUEUE ────────────────────────────────────────────────
 
   Future<List<String>> processSyncQueue(List<SyncQueueTableData> items) async {
@@ -329,5 +341,24 @@ class SupabaseSyncService {
       mapped[camelKey] = value;
     });
     return mapped;
+  }
+
+  // ── KEEP-ALIVE ───────────────────────────────────────────────────
+
+  /// Sends a lightweight keep-alive query to Supabase to prevent inactive pausing.
+  Future<bool> pingKeepAlive() async {
+    final client = _client;
+    if (client == null) {
+      debugPrint('[SupabaseSync] pingKeepAlive skipped: client not configured');
+      return false;
+    }
+    try {
+      await client.from('parties').select('id').limit(1);
+      debugPrint('[SupabaseSync] pingKeepAlive succeeded');
+      return true;
+    } catch (e) {
+      debugPrint('[SupabaseSync] pingKeepAlive error: $e');
+      return false;
+    }
   }
 }

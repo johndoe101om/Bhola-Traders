@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/local/local_database.dart';
 import '../../../data/repositories/providers.dart';
 
@@ -124,14 +125,11 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
             // Name
             const _FieldLabel('नाम / Name *'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _nameCtrl,
-              textCapitalization: TextCapitalization.words,
               style: const TextStyle(fontSize: 18),
-              decoration: const InputDecoration(
-                hintText: 'जैसे: राम लाल यादव',
-                prefixIcon: Icon(Icons.person_rounded),
-              ),
+              hintText: 'जैसे: राम लाल यादव',
+              prefixIcon: const Icon(Icons.person_rounded),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Name is required' : null,
             ),
@@ -139,42 +137,36 @@ class _AddPartyScreenState extends ConsumerState<AddPartyScreen> {
 
             // Phone
             const _FieldLabel('मोबाइल / Phone'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _phoneCtrl,
               keyboardType: TextInputType.phone,
+              isNumeric: true,
               style: const TextStyle(fontSize: 18),
-              decoration: const InputDecoration(
-                hintText: '9876543210',
-                prefixIcon: Icon(Icons.phone_rounded),
-              ),
+              hintText: '9876543210',
+              prefixIcon: const Icon(Icons.phone_rounded),
             ),
             const SizedBox(height: 16),
 
             // Village
             const _FieldLabel('गाँव / Village'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _villageCtrl,
-              textCapitalization: TextCapitalization.words,
               style: const TextStyle(fontSize: 18),
-              decoration: const InputDecoration(
-                hintText: 'जैसे: सीतापुर',
-                prefixIcon: Icon(Icons.location_on_rounded),
-              ),
+              hintText: 'जैसे: सीतापुर',
+              prefixIcon: const Icon(Icons.location_on_rounded),
             ),
             const SizedBox(height: 16),
 
             // Notes
             const _FieldLabel('नोट / Notes'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _notesCtrl,
               maxLines: 2,
               style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(
-                hintText: 'कोई जरूरी जानकारी...',
-                prefixIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 20),
-                  child: Icon(Icons.notes_rounded),
-                ),
+              hintText: 'कोई जरूरी जानकारी...',
+              prefixIcon: const Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Icon(Icons.notes_rounded),
               ),
             ),
 

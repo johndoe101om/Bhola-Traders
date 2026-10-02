@@ -130,6 +130,42 @@ class _PartyLedgerScreenState extends ConsumerState<PartyLedgerScreen>
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (_tabs.index == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    EntryScreen(preselectedPartyId: widget.partyId),
+              ),
+            ).then((_) {
+              ref.invalidate(partyBalanceProvider(widget.partyId));
+              ref.invalidate(partyBagsProvider(widget.partyId));
+            });
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) =>
+                    BagEntryScreen(partyId: widget.partyId),
+              ),
+            ).then((_) {
+              ref.invalidate(partyBagsProvider(widget.partyId));
+            });
+          }
+        },
+        backgroundColor: AppTheme.primary,
+        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        label: Text(
+          _tabs.index == 0 ? 'नई एंट्री / New Entry' : 'बोरी एंट्री / Bag Entry',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
       body: Column(
         children: [
           Container(
@@ -234,20 +270,6 @@ class _PartyLedgerScreenState extends ConsumerState<PartyLedgerScreen>
           ),
         ],
       ),
-      floatingActionButton: _tabs.index == 1
-          ? FloatingActionButton.extended(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (_) => BagEntryScreen(partyId: widget.partyId)),
-              ).then((_) => ref.invalidate(partyBagsProvider(widget.partyId))),
-              backgroundColor: AppTheme.bagColor,
-              icon: const Icon(Icons.add, color: Colors.white),
-              label: const Text('बोरी एंट्री / Bag Entry',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
-            )
-          : const SizedBox.shrink(),
     );
   }
 }

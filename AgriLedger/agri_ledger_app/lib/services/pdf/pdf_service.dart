@@ -111,9 +111,16 @@ class PdfService {
             width: double.infinity,
             padding: const pw.EdgeInsets.all(16),
             decoration: pw.BoxDecoration(
-              color: amountColor.shade(0.08),
+              color: isIn
+                  ? const PdfColor.fromInt(0xFFF0FDF4)
+                  : const PdfColor.fromInt(0xFFFFF1F2),
               borderRadius: pw.BorderRadius.circular(8),
-              border: pw.Border.all(color: amountColor, width: 1.5),
+              border: pw.Border.all(
+                color: isIn
+                    ? const PdfColor.fromInt(0xFF86EFAC)
+                    : const PdfColor.fromInt(0xFFFECDD3),
+                width: 1.5,
+              ),
             ),
             child: pw.Column(
               children: [
@@ -218,8 +225,14 @@ class PdfService {
               pw.Container(
                 padding: const pw.EdgeInsets.all(12),
                 decoration: pw.BoxDecoration(
-                  color: balanceColor.shade(0.08),
-                  border: pw.Border.all(color: balanceColor),
+                  color: balance >= 0
+                      ? const PdfColor.fromInt(0xFFF0FDF4)
+                      : const PdfColor.fromInt(0xFFFFF1F2),
+                  border: pw.Border.all(
+                    color: balance >= 0
+                        ? const PdfColor.fromInt(0xFF86EFAC)
+                        : const PdfColor.fromInt(0xFFFECDD3),
+                  ),
                   borderRadius: pw.BorderRadius.circular(8),
                 ),
                 child: pw.Column(
@@ -735,25 +748,39 @@ pw.Widget _SummaryCell(
   PdfColor color,
   pw.Font font,
   pw.Font fontBold,
-) =>
-    pw.Expanded(
-      child: pw.Container(
-        margin: const pw.EdgeInsets.symmetric(horizontal: 4),
-        padding: const pw.EdgeInsets.all(10),
-        decoration: pw.BoxDecoration(
-          color: color.shade(0.06),
-          borderRadius: pw.BorderRadius.circular(6),
-        ),
-        child: pw.Column(children: [
-          pw.Text(label,
-              textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(font: font, fontSize: 9, color: _grey)),
-          pw.SizedBox(height: 4),
-          pw.Text(value,
-              style: pw.TextStyle(font: fontBold, fontSize: 12, color: color)),
-        ]),
+) {
+  final isRed = color == _red;
+  final bg = isRed
+      ? const PdfColor.fromInt(0xFFFFF1F2)
+      : const PdfColor.fromInt(0xFFF0FDF4);
+  final border = isRed
+      ? const PdfColor.fromInt(0xFFFECDD3)
+      : const PdfColor.fromInt(0xFFBBF7D0);
+  final textCol = isRed
+      ? const PdfColor.fromInt(0xFF9F1239)
+      : const PdfColor.fromInt(0xFF166534);
+
+  return pw.Expanded(
+    child: pw.Container(
+      margin: const pw.EdgeInsets.symmetric(horizontal: 4),
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        color: bg,
+        borderRadius: pw.BorderRadius.circular(6),
+        border: pw.Border.all(color: border, width: 0.8),
       ),
-    );
+      child: pw.Column(children: [
+        pw.Text(label,
+            textAlign: pw.TextAlign.center,
+            style: pw.TextStyle(font: font, fontSize: 9, color: textCol)),
+        pw.SizedBox(height: 4),
+        pw.Text(value,
+            style:
+                pw.TextStyle(font: fontBold, fontSize: 13, color: textCol)),
+      ]),
+    ),
+  );
+}
 
 pw.TableRow _TableHeader(List<String> cols, {required pw.Font font}) =>
     pw.TableRow(

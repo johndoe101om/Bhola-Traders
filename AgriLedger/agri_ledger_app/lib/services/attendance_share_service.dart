@@ -48,35 +48,39 @@ class AttendanceShareService {
     final statusHindi = AppConstants.attendanceStatusLabels[status] ?? status;
 
     String statusDisplay;
-    double wageToday = 0.0;
     switch (status) {
       case 'present':
         statusDisplay = 'उपस्थित / Present ✅';
-        wageToday = employee.dailyWageRate;
         break;
       case 'absent':
         statusDisplay = 'अनुपस्थित / Absent ❌';
-        wageToday = 0.0;
         break;
       case 'half_day':
         statusDisplay = 'आधा दिन / Half Day ⏳';
-        wageToday = employee.dailyWageRate * 0.5;
         break;
       case 'overtime':
-        final ot = overtimeHours ?? 2.0;
-        final otRate = employee.dailyWageRate > 0
-            ? (employee.dailyWageRate / 8.0) * 1.5
-            : 0.0;
-        final otWage = ot * otRate;
-        statusDisplay = 'ओवरटाइम / Overtime ⏱️ (${ot.toStringAsFixed(1)} घंटे)';
-        wageToday = employee.dailyWageRate + otWage;
+        statusDisplay = 'ओवरटाइम / Overtime ⏱️';
         break;
       case 'holiday':
         statusDisplay = 'छुट्टी / Holiday 🏖️';
-        wageToday = 0.0;
         break;
       default:
         statusDisplay = statusHindi;
+    }
+
+    double todayWage = 0;
+    final dailyRate = employee.dailyWageRate;
+    if (status == 'present') {
+      todayWage = dailyRate;
+    } else if (status == 'half_day') {
+      todayWage = dailyRate / 2;
+    } else if (status == 'overtime') {
+      final hourly = dailyRate / 8.0;
+      final otRate = hourly * 1.5;
+      final otPay = (overtimeHours ?? 0) * otRate;
+      todayWage = dailyRate + otPay;
+    } else {
+      todayWage = 0;
     }
 
     final buffer = StringBuffer();
@@ -86,20 +90,16 @@ class AttendanceShareService {
     buffer.writeln('👤 *कर्मचारी / Staff:* ${employee.name}');
     buffer.writeln('📅 *तारीख / Date:* $dateStr');
     buffer.writeln('📌 *स्थिति / Status:* $statusDisplay');
-    buffer.writeln('💵 *दैनिक दर / Daily Rate:* ₹${employee.dailyWageRate.toStringAsFixed(0)}');
-
-    if (status == 'overtime' && overtimeHours != null) {
+    if (overtimeHours != null && overtimeHours > 0) {
       buffer.writeln('⏱️ *ओवरटाइम / OT:* ${overtimeHours.toStringAsFixed(1)} घंटे');
     }
-
-    if (status == 'absent' && absenceReason != null && absenceReason.isNotEmpty) {
+    if (absenceReason != null && absenceReason.trim().isNotEmpty) {
       buffer.writeln('📝 *कारण / Reason:* $absenceReason');
     }
-
-    buffer.writeln('💰 *आज का कुल वेतन / Today Wage:* ₹${wageToday.toStringAsFixed(0)}');
+    buffer.writeln('💰 *आज का वेतन / Today Wage:* ₹${todayWage.round()}');
     buffer.writeln('--------------------------------');
-    buffer.writeln('भोला ट्रेडर्स (मंडी रोड)');
-    buffer.writeln('📞 किसी भी प्रश्न के लिए संपर्क करें।');
+    buffer.writeln('भोला ट्रेडर्स  (विश्वकर्मा चौक)');
+    buffer.write('📞 +91 9582863135     किसी भी प्रश्न के लिए संपर्क करें।');
 
     return buffer.toString();
   }

@@ -137,15 +137,26 @@ class PdfGenerator {
 
           // ── TRANSACTION TYPE BADGE ────────────────────────────────
           pw.Container(
-            padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: pw.BoxDecoration(
-              color: color.shade(0.85),
+              color: isIn
+                  ? const PdfColor.fromInt(0xFFF0FDF4)
+                  : const PdfColor.fromInt(0xFFFFF1F2),
+              border: pw.Border.all(
+                color: isIn
+                    ? const PdfColor.fromInt(0xFF86EFAC)
+                    : const PdfColor.fromInt(0xFFFECDD3),
+              ),
               borderRadius: pw.BorderRadius.circular(20),
             ),
             child: pw.Text(
               _txnTypeLabel(txn.txnType),
               style: pw.TextStyle(
-                  color: color, fontSize: 12, fontWeight: pw.FontWeight.bold),
+                  color: isIn
+                      ? const PdfColor.fromInt(0xFF166534)
+                      : const PdfColor.fromInt(0xFF9F1239),
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold),
             ),
           ),
 
@@ -168,8 +179,16 @@ class PdfGenerator {
           // ── AMOUNT (BIG) ──────────────────────────────────────────
           pw.Container(
             decoration: pw.BoxDecoration(
-              color: color.shade(0.9),
+              color: isIn
+                  ? const PdfColor.fromInt(0xFFF0FDF4)
+                  : const PdfColor.fromInt(0xFFFFF1F2),
               borderRadius: pw.BorderRadius.circular(8),
+              border: pw.Border.all(
+                color: isIn
+                    ? const PdfColor.fromInt(0xFF86EFAC)
+                    : const PdfColor.fromInt(0xFFFECDD3),
+                width: 1.5,
+              ),
             ),
             padding: const pw.EdgeInsets.all(16),
             child: pw.Row(
@@ -177,13 +196,17 @@ class PdfGenerator {
               children: [
                 pw.Text('कुल रकम / Total Amount',
                     style: pw.TextStyle(
-                        color: color,
+                        color: isIn
+                            ? const PdfColor.fromInt(0xFF166534)
+                            : const PdfColor.fromInt(0xFF9F1239),
                         fontSize: 13,
                         fontWeight: pw.FontWeight.bold)),
                 pw.Text(
                   _rupee.format(txn.amount),
                   style: pw.TextStyle(
-                      color: color,
+                      color: isIn
+                          ? const PdfColor.fromInt(0xFF166534)
+                          : const PdfColor.fromInt(0xFF9F1239),
                       fontSize: 24,
                       fontWeight: pw.FontWeight.bold),
                 ),
@@ -575,10 +598,12 @@ class PdfGenerator {
           // ── NET ───────────────────────────────────────────────
           pw.Container(
             decoration: pw.BoxDecoration(
-              color: netProfit >= 0 ? _green.shade(0.85) : _red.shade(0.85),
+              color: netProfit >= 0
+                  ? const PdfColor.fromInt(0xFF15803D)
+                  : const PdfColor.fromInt(0xFFB91C1C),
               borderRadius: pw.BorderRadius.circular(8),
             ),
-            padding: const pw.EdgeInsets.all(14),
+            padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
@@ -586,12 +611,12 @@ class PdfGenerator {
                     style: pw.TextStyle(
                         fontSize: 14,
                         fontWeight: pw.FontWeight.bold,
-                        color: netProfit >= 0 ? _green : _red)),
+                        color: PdfColors.white)),
                 pw.Text(_rupee.format(netProfit.abs()),
                     style: pw.TextStyle(
                         fontSize: 22,
                         fontWeight: pw.FontWeight.bold,
-                        color: netProfit >= 0 ? _green : _red)),
+                        color: PdfColors.white)),
               ],
             ),
           ),
@@ -1431,29 +1456,53 @@ pw.Widget _TableCell(String text, {PdfColor? color, bool bold = false}) =>
           )),
     );
 
-pw.Widget _SummaryCard(String label, double amount, PdfColor color) =>
-    pw.Expanded(
-        child: pw.Container(
+pw.Widget _SummaryCard(String label, double amount, PdfColor color) {
+  final isRed = color == _red;
+  final bg = isRed
+      ? const PdfColor.fromInt(0xFFFFF1F2)
+      : const PdfColor.fromInt(0xFFF0FDF4);
+  final border = isRed
+      ? const PdfColor.fromInt(0xFFFECDD3)
+      : const PdfColor.fromInt(0xFFBBF7D0);
+  final textCol = isRed
+      ? const PdfColor.fromInt(0xFF9F1239)
+      : const PdfColor.fromInt(0xFF166534);
+
+  return pw.Expanded(
+    child: pw.Container(
       padding: const pw.EdgeInsets.all(12),
       decoration: pw.BoxDecoration(
-        color: color.shade(0.9),
+        color: bg,
         borderRadius: pw.BorderRadius.circular(8),
-        border: pw.Border.all(color: color.shade(0.7)),
+        border: pw.Border.all(color: border, width: 1),
       ),
-      child:
-          pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
-        pw.Text(label,
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            label,
             style: pw.TextStyle(
-                color: color, fontSize: 11, fontWeight: pw.FontWeight.bold)),
-        pw.SizedBox(height: 4),
-        pw.Text(
+              color: textCol,
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
             NumberFormat.currency(
                     locale: 'en_IN', symbol: '₹', decimalDigits: 0)
                 .format(amount),
             style: pw.TextStyle(
-                color: color, fontSize: 18, fontWeight: pw.FontWeight.bold)),
-      ]),
-    ));
+              color: textCol,
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 class _EmpReportItem {
   final EmployeesTableData employee;

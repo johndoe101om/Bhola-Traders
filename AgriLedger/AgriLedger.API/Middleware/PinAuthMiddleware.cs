@@ -15,6 +15,7 @@ public class PinAuthMiddleware
     [
         "/swagger",
         "/health",
+        "/api/keepalive",
         "/api/v1/auth"
     ];
 

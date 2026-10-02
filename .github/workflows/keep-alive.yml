@@ -1,0 +1,51 @@
+name: Keep-Alive Supabase & Backend
+
+on:
+  schedule:
+    # Run every day at 06:00 UTC (11:30 AM IST)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  keepalive:
+    name: Ping Supabase & Backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+          if [ -z "$SUPABASE_URL" ]; then
+            SUPABASE_URL="https://mmfrilhikotpssbtgees.supabase.co"
+          fi
+
+          SUPABASE_KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$SUPABASE_KEY" ]; then
+            SUPABASE_KEY="sb_publishable_-nhZTWlt7wMb3ytl1d03Sw_rA_W1ZgG"
+          fi
+
+          echo "Sending keep-alive ping to Supabase endpoint to prevent 7-day inactivity pause..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+            "${SUPABASE_URL%/}/rest/v1/parties?select=id&limit=1" \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            --max-time 30)
+
+          echo "Supabase HTTP status code: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "✅ Supabase is active and keep-alive pulse succeeded."
+          else
+            echo "⚠️ Supabase returned HTTP status $HTTP_STATUS"
+          fi
+
+      - name: Ping Backend Keep-Alive Endpoint
+        run: |
+          BACKEND_URL="${{ secrets.BACKEND_URL }}"
+          if [ -n "$BACKEND_URL" ]; then
+            echo "Sending keep-alive ping to backend $BACKEND_URL..."
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X GET \
+              "${BACKEND_URL%/}/api/keepalive" \
+              --max-time 45)
+            echo "Backend HTTP status code: $STATUS"
+          else
+            echo "ℹ️ BACKEND_URL secret not set. Skipping backend ping."
+          fi

@@ -13,6 +13,7 @@ public class MiddlewareTests
 {
     [Theory]
     [InlineData("/health")]
+    [InlineData("/api/keepalive")]
     [InlineData("/swagger/index.html")]
     [InlineData("/api/v1/auth/verify")]
     public async Task PinAuthMiddleware_AllowsPublicPaths_WithoutPin(string path)

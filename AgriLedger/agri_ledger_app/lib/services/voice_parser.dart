@@ -88,6 +88,12 @@ class VoiceParser {
     // Maize
     'मक्का': 'maize', 'मक्के': 'maize', 'maize': 'maize',
     'makka': 'maize', 'makke': 'maize', 'corn': 'maize', 'bhutta': 'maize',
+    // Jute
+    'जूट': 'jute', 'पटसन': 'jute', 'jute': 'jute', 'jut': 'jute',
+    // Moong Dal
+    'मूंग': 'moong_dal', 'मूँग': 'moong_dal', 'मूंग दाल': 'moong_dal',
+    'मूँग दाल': 'moong_dal', 'moong': 'moong_dal', 'mung': 'moong_dal',
+    'moong dal': 'moong_dal', 'mung daal': 'moong_dal',
   };
 
   // ── PURCHASE KEYWORDS ─────────────────────────────────────────────

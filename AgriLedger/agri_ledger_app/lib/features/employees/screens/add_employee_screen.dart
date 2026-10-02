@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/local/local_database.dart';
 import '../../../data/models/employee_models.dart';
 import '../../../data/repositories/providers.dart';
@@ -184,15 +185,11 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            TextFormField(
+            VoiceTextFormField(
               controller: _nameCtrl,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'नाम / Full Name *',
-                hintText: 'e.g. Ramesh Kumar',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.person_rounded),
-              ),
+              labelText: 'नाम / Full Name *',
+              hintText: 'e.g. Ramesh Kumar',
+              prefixIcon: const Icon(Icons.person_rounded),
               validator: (v) => v == null || v.trim().isEmpty
                   ? 'नाम आवश्यक है / Name is required'
                   : null,
@@ -220,28 +217,24 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: VoiceTextFormField(
                     controller: _phoneCtrl,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
-                      labelText: 'मोबाइल / Phone',
-                      hintText: '10-digit number',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.phone_rounded),
-                    ),
+                    isNumeric: true,
+                    labelText: 'मोबाइल / Phone',
+                    hintText: '10-digit number',
+                    prefixIcon: const Icon(Icons.phone_rounded),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextFormField(
+                  child: VoiceTextFormField(
                     controller: _wageCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'दैनिक वेतन (₹) / Daily Rate *',
-                      hintText: 'e.g. 400',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.currency_rupee_rounded),
-                    ),
+                    isNumeric: true,
+                    labelText: 'दैनिक वेतन (₹) / Daily Rate *',
+                    hintText: 'e.g. 400',
+                    prefixIcon: const Icon(Icons.currency_rupee_rounded),
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'वेतन आवश्यक है' : null,
                   ),
@@ -249,41 +242,33 @@ class _AddEmployeeScreenState extends ConsumerState<AddEmployeeScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            VoiceTextFormField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'ईमेल / Email (वैकल्पिक)',
-                hintText: 'notification@example.com',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_rounded),
-              ),
+              labelText: 'ईमेल / Email (वैकल्पिक)',
+              hintText: 'notification@example.com',
+              prefixIcon: const Icon(Icons.email_rounded),
             ),
             const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: VoiceTextFormField(
                     controller: _teamCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'टीम/ग्रुप / Team or Group',
-                      hintText: 'e.g. Warehouse, Field',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.group_rounded),
-                    ),
+                    labelText: 'टीम/ग्रुप / Team or Group',
+                    hintText: 'e.g. Warehouse, Field',
+                    prefixIcon: const Icon(Icons.group_rounded),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: TextFormField(
+                  child: VoiceTextFormField(
                     controller: _aadhaarCtrl,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'आधार नं. / Aadhaar No.',
-                      hintText: '12-digit',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.badge_rounded),
-                    ),
+                    isNumeric: true,
+                    labelText: 'आधार नं. / Aadhaar No.',
+                    hintText: '12-digit',
+                    prefixIcon: const Icon(Icons.badge_rounded),
                   ),
                 ),
               ],

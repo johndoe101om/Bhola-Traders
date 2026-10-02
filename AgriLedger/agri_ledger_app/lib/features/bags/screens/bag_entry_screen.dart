@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift;
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/local/local_database.dart';
 
@@ -270,15 +271,13 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
-            TextField(
+            VoiceTextFormField(
               controller: _qtyCtrl,
               keyboardType: TextInputType.number,
+              isNumeric: true,
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                hintText: '0',
-                suffixText: 'बोरी / Bags',
-                suffixStyle: TextStyle(fontSize: 16),
-              ),
+              hintText: '0',
+              suffixText: 'बोरी / Bags',
             ),
             const SizedBox(height: 16),
 
@@ -289,11 +288,10 @@ class _BagEntryScreenState extends ConsumerState<BagEntryScreen> {
                     fontWeight: FontWeight.w700,
                     color: AppTheme.textSecondary)),
             const SizedBox(height: 8),
-            TextField(
+            VoiceTextFormField(
               controller: _notesCtrl,
               style: const TextStyle(fontSize: 16),
-              decoration:
-                  const InputDecoration(hintText: 'वैकल्पिक / Optional'),
+              hintText: 'वैकल्पिक / Optional',
             ),
 
             const Spacer(),

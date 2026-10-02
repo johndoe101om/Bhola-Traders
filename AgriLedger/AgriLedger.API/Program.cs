@@ -10,6 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 // ── SERVICES ──────────────────────────────────────────────────────────
 
 builder.Services.AddHttpClient<INotificationService, NotificationService>();
+builder.Services.AddHttpClient("SupabaseKeepAlive", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddSingleton<SupabaseKeepAliveService>();
+builder.Services.AddSingleton<ISupabaseKeepAliveService>(sp => sp.GetRequiredService<SupabaseKeepAliveService>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<SupabaseKeepAliveService>());
 
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
@@ -150,11 +157,38 @@ app.UseRouting();
 app.MapControllers();
 
 // Health check endpoint (no auth required)
-app.MapGet("/health", () => new
+app.MapGet("/health", async (ISupabaseKeepAliveService keepAliveService, [FromQuery] bool? pingSupabase, CancellationToken ct) =>
 {
-    status = "ok",
-    timestamp = DateTime.UtcNow,
-    version = "1.0.0"
+    if (pingSupabase == true)
+    {
+        var result = await keepAliveService.CheckHealthAsync(ct);
+        return Results.Ok(new
+        {
+            status = result.Supabase.Success ? "ok" : "degraded",
+            timestamp = DateTime.UtcNow,
+            version = "1.0.0",
+            supabase = result.Supabase
+        });
+    }
+
+    return Results.Ok(new
+    {
+        status = "ok",
+        timestamp = DateTime.UtcNow,
+        version = "1.0.0"
+    });
+});
+
+// Dedicated Keep-Alive endpoint (no auth required) to ping Supabase and backend
+app.MapGet("/api/keepalive", async (ISupabaseKeepAliveService keepAliveService, CancellationToken ct) =>
+{
+    var result = await keepAliveService.CheckHealthAsync(ct);
+    var response = ApiResponse<OverallHealthResult>.Ok(
+        result,
+        result.Supabase.Success
+            ? "Keep-alive pulse completed successfully"
+            : "Supabase keep-alive ping returned non-success");
+    return Results.Ok(response);
 });
 
 app.Run();

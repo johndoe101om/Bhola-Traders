@@ -63,6 +63,7 @@ class SyncEngine extends ChangeNotifier {
   StreamSubscription<int>? _pendingSub;
   Timer? _periodicTimer;
   Timer? _retryTimer;
+  Timer? _debounceTimer;
   bool _disposed = false;
 
   // Sync intervals
@@ -88,12 +89,20 @@ class SyncEngine extends ChangeNotifier {
     // Watch pending sync count from local database
     _pendingSub = _repo.watchPendingSyncCount().listen((count) {
       _updateState(_state.copyWith(pendingCount: count));
+      if (count > 0 && isOnline && !_state.isBusy) {
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(seconds: 4), () {
+          if (!_disposed && isOnline && !_state.isBusy) {
+            syncNow();
+          }
+        });
+      }
     });
 
     // Check current state immediately
     _checkConnectivity();
 
-    // Periodic sync every 5 minutes when online
+    // Periodic sync every 5 minutes when online and pending items exist
     _periodicTimer = Timer.periodic(_periodicInterval, (_) => _syncIfDue());
 
     // Load last sync time
@@ -204,12 +213,32 @@ class SyncEngine extends ChangeNotifier {
 
   // ── PERIODIC SYNC ──────────────────────────────────────────────
   Future<void> _syncIfDue() async {
-    if (_state.status == SyncStatus.offline) return;
     if (_state.isBusy) return;
-    final pending = await _repo.watchPendingSyncCount().first;
-    if (pending > 0) {
-      debugPrint('[SyncEngine] Periodic sync — $pending pending');
-      await syncNow();
+    try {
+      await _checkConnectivity();
+      if (!isOnline) {
+        debugPrint('[SyncEngine] Periodic check: offline, skipping.');
+        return;
+      }
+      final pending = await _repo.watchPendingSyncCount().first;
+      if (pending > 0) {
+        debugPrint('[SyncEngine] Periodic 5-minute sync — $pending pending items. Syncing now...');
+        await syncNow(force: true);
+      } else {
+        debugPrint('[SyncEngine] Periodic check: 0 pending items.');
+        final lastSync = _state.lastSyncAt;
+        if (lastSync == null || DateTime.now().difference(lastSync).inHours >= 6) {
+          debugPrint('[SyncEngine] Sending keep-alive ping to Supabase...');
+          final ok = await _repo.pingKeepAlive();
+          if (ok) {
+            final now = DateTime.now();
+            await _saveLastSyncTime(now);
+            _updateState(_state.copyWith(lastSyncAt: now));
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[SyncEngine] Periodic sync error: $e');
     }
   }
 
@@ -219,7 +248,7 @@ class SyncEngine extends ChangeNotifier {
     _retryTimer = Timer(_retryInterval, () {
       if (!_disposed && _state.status == SyncStatus.failed) {
         debugPrint('[SyncEngine] Retrying failed sync...');
-        syncNow();
+        syncNow(force: true);
       }
     });
   }
@@ -266,6 +295,7 @@ class SyncEngine extends ChangeNotifier {
     _pendingSub?.cancel();
     _periodicTimer?.cancel();
     _retryTimer?.cancel();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 }

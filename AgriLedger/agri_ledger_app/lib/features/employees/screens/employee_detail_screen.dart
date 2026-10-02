@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/local/local_database.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../services/printing/print_service.dart';
@@ -157,8 +158,8 @@ class _EmployeeDetailScreenState extends ConsumerState<EmployeeDetailScreen>
       buffer.writeln('📌 *हिसाब बराबर (Settled)*');
     }
     buffer.writeln('--------------------------------');
-    buffer.writeln('भोला ट्रेडर्स (मंडी रोड)');
-    buffer.writeln('📞 किसी भी जानकारी के लिए संपर्क करें।');
+    buffer.writeln('भोला ट्रेडर्स  (विश्वकर्मा चौक)');
+    buffer.write('📞 +91 9582863135     किसी भी प्रश्न के लिए संपर्क करें।');
 
     final message = buffer.toString();
     final phone = employee.phone;
@@ -748,6 +749,281 @@ class _EmployeeAttendanceTab extends ConsumerWidget {
   final String employeeId;
   const _EmployeeAttendanceTab({required this.employeeId});
 
+  void _showAttendanceActions(
+    BuildContext context,
+    WidgetRef ref,
+    AttendancesTableData record,
+  ) {
+    final employeesAsync = ref.read(employeesStreamProvider(''));
+    final employee = employeesAsync.maybeWhen(
+      data: (list) => list.where((e) => e.id == employeeId).firstOrNull,
+      orElse: () => null,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                '${record.attendanceDate} — ${AppConstants.attendanceStatusLabels[record.status] ?? record.status}',
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.edit_rounded, color: AppTheme.primary),
+                title: const Text('बदलें / Edit',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('हाजिरी स्थिति बदलें'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditAttendanceDialog(context, ref, record);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.share_rounded, color: Colors.blue.shade700),
+                title: const Text('शेयर करें / Share',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('WhatsApp / SMS से भेजें'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  if (employee != null) {
+                    final date = DateTime.tryParse(record.attendanceDate) ??
+                        DateTime.now();
+                    AttendanceShareService.showShareIndividualDialog(
+                      context: context,
+                      employee: employee,
+                      status: record.status,
+                      date: date,
+                      absenceReason: record.absenceReason,
+                      overtimeHours: record.overtimeHours,
+                    );
+                  }
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete_rounded, color: Colors.red),
+                title: const Text('हटाएं / Delete',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, color: Colors.red)),
+                subtitle: const Text('यह हाजिरी रिकॉर्ड हटाएं'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final ok = await confirmDialog(
+                    context,
+                    title: 'हाजिरी हटाएं? / Delete Attendance?',
+                    message:
+                        '${record.attendanceDate} की हाजिरी हटा दी जाएगी। यह कार्य वापस नहीं होगा।\n\nAttendance for ${record.attendanceDate} will be deleted permanently.',
+                  );
+                  if (ok && context.mounted) {
+                    try {
+                      await ref
+                          .read(appRepositoryProvider)
+                          .deleteAttendance(record.id);
+                      if (context.mounted) {
+                        showSuccess(context, 'हाजिरी हटा दी गई / Attendance deleted');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        showError(context, 'हटाने में त्रुटि / Delete failed');
+                      }
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditAttendanceDialog(
+    BuildContext context,
+    WidgetRef ref,
+    AttendancesTableData record,
+  ) {
+    String selectedStatus = record.status;
+    final reasonCtrl =
+        TextEditingController(text: record.absenceReason ?? '');
+    double otHours = record.overtimeHours ?? 2.0;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'हाजिरी बदलें / Edit (${record.attendanceDate})',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final status in ['present', 'absent', 'half_day', 'overtime'])
+                      ChoiceChip(
+                        label: Text(
+                          AppConstants.attendanceStatusLabels[status] ?? status,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: selectedStatus == status
+                                ? Colors.white
+                                : AppTheme.textPrimary,
+                          ),
+                        ),
+                        selected: selectedStatus == status,
+                        selectedColor: AppTheme.primary,
+                        onSelected: (sel) {
+                          if (sel) {
+                            setModalState(() => selectedStatus = status);
+                          }
+                        },
+                      ),
+                  ],
+                ),
+                if (selectedStatus == 'absent') ...[
+                  const SizedBox(height: 12),
+                  VoiceTextFormField(
+                    controller: reasonCtrl,
+                    labelText: 'कारण / Reason',
+                    hintText: 'अनुपस्थिति का कारण',
+                  ),
+                ],
+                if (selectedStatus == 'overtime') ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('OT घंटे: ', style: TextStyle(fontSize: 14)),
+                      Expanded(
+                        child: Slider(
+                          value: otHours,
+                          min: 0.5,
+                          max: 8.0,
+                          divisions: 15,
+                          label: '${otHours.toStringAsFixed(1)}h',
+                          onChanged: (v) =>
+                              setModalState(() => otHours = v),
+                        ),
+                      ),
+                      Text('${otHours.toStringAsFixed(1)}h',
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    icon: const Icon(Icons.check, size: 18),
+                    label: const Text('सेव करें / Save',
+                        style: TextStyle(fontSize: 15)),
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      try {
+                        final date =
+                            DateTime.tryParse(record.attendanceDate) ??
+                                DateTime.now();
+                        await ref.read(appRepositoryProvider).markAttendance(
+                              employeeId: employeeId,
+                              date: date,
+                              status: selectedStatus,
+                              absenceReason: selectedStatus == 'absent'
+                                  ? reasonCtrl.text.trim()
+                                  : null,
+                              overtimeHours: selectedStatus == 'overtime'
+                                  ? otHours
+                                  : null,
+                            );
+                        if (context.mounted) {
+                          showSuccess(context,
+                              'हाजिरी अपडेट हो गई / Attendance updated');
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          showError(context,
+                              'अपडेट में त्रुटि / Update failed');
+                        }
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _shareAttendanceRecord(
+    BuildContext context,
+    WidgetRef ref,
+    AttendancesTableData record,
+  ) {
+    final employeesAsync = ref.read(employeesStreamProvider(''));
+    final employee = employeesAsync.maybeWhen(
+      data: (list) => list.where((e) => e.id == employeeId).firstOrNull,
+      orElse: () => null,
+    );
+    if (employee != null) {
+      final date =
+          DateTime.tryParse(record.attendanceDate) ?? DateTime.now();
+      AttendanceShareService.showShareIndividualDialog(
+        context: context,
+        employee: employee,
+        status: record.status,
+        date: date,
+        absenceReason: record.absenceReason,
+        overtimeHours: record.overtimeHours,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final attendanceAsync =
@@ -780,61 +1056,97 @@ class _EmployeeAttendanceTab extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 8),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
-              child: ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    isPresent
-                        ? 'P'
-                        : (isAbsent
-                            ? 'A'
-                            : (r.status == 'half_day' ? 'H' : 'OT')),
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: color),
-                  ),
-                ),
-                title: Text(
-                  r.attendanceDate,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppConstants.attendanceStatusLabels[r.status] ?? r.status,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: color,
-                          fontWeight: FontWeight.w600),
-                    ),
-                    if (r.absenceReason != null && r.absenceReason!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _showAttendanceActions(context, ref, r),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        alignment: Alignment.center,
                         child: Text(
-                          'कारण: ${r.absenceReason}',
+                          isPresent
+                              ? 'P'
+                              : (isAbsent
+                                  ? 'A'
+                                  : (r.status == 'half_day' ? 'H' : 'OT')),
                           style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.red.shade700,
-                              fontStyle: FontStyle.italic),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: color),
                         ),
                       ),
-                  ],
-                ),
-                trailing: Text(
-                  r.status == 'present'
-                      ? 'पूरा दिन'
-                      : (r.status == 'half_day' ? '0.5 दिन' : ''),
-                  style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              r.attendanceDate,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 15),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              AppConstants.attendanceStatusLabels[r.status] ??
+                                  r.status,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: color,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            if (r.absenceReason != null &&
+                                r.absenceReason!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  'कारण: ${r.absenceReason}',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.red.shade700,
+                                      fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            r.status == 'present'
+                                ? 'पूरा दिन'
+                                : (r.status == 'half_day' ? '0.5 दिन' : ''),
+                            style: const TextStyle(
+                                fontSize: 12, color: AppTheme.textSecondary),
+                          ),
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () =>
+                                _shareAttendanceRecord(context, ref, r),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(Icons.share_rounded,
+                                  size: 16, color: Colors.blue.shade700),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -850,6 +1162,449 @@ class _EmployeeAttendanceTab extends ConsumerWidget {
 class _EmployeePaymentsTab extends ConsumerWidget {
   final String employeeId;
   const _EmployeePaymentsTab({required this.employeeId});
+
+  void _showPaymentActions(
+    BuildContext context,
+    WidgetRef ref,
+    EmployeePaymentsTableData payment,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                '${formatRupees(payment.amount)} — ${payment.paymentDate}',
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                '${payment.paymentMode.toUpperCase()} • ${AppConstants.employeePaymentTypeLabels[payment.paymentType] ?? payment.paymentType}',
+                style: const TextStyle(
+                    fontSize: 13, color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.edit_rounded, color: AppTheme.primary),
+                title: const Text('बदलें / Edit',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('भुगतान विवरण बदलें'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showEditPaymentDialog(context, ref, payment);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.share_rounded, color: Colors.blue.shade700),
+                title: const Text('शेयर करें / Share',
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: const Text('WhatsApp / SMS से भेजें'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _sharePaymentRecord(context, ref, payment);
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete_rounded, color: Colors.red),
+                title: const Text('हटाएं / Delete',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, color: Colors.red)),
+                subtitle: const Text('यह भुगतान रिकॉर्ड हटाएं'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final ok = await confirmDialog(
+                    context,
+                    title: 'भुगतान हटाएं? / Delete Payment?',
+                    message:
+                        '${formatRupees(payment.amount)} (${payment.paymentDate}) का भुगतान हटा दिया जाएगा। यह कार्य वापस नहीं होगा।\n\nPayment of ${formatRupees(payment.amount)} on ${payment.paymentDate} will be deleted permanently.',
+                  );
+                  if (ok && context.mounted) {
+                    try {
+                      await ref
+                          .read(appRepositoryProvider)
+                          .deleteEmployeePayment(payment.id);
+                      if (context.mounted) {
+                        showSuccess(
+                            context, 'भुगतान हटा दिया गया / Payment deleted');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        showError(context, 'हटाने में त्रुटि / Delete failed');
+                      }
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showEditPaymentDialog(
+    BuildContext context,
+    WidgetRef ref,
+    EmployeePaymentsTableData payment,
+  ) {
+    final amountCtrl =
+        TextEditingController(text: payment.amount.toStringAsFixed(0));
+    final notesCtrl = TextEditingController(text: payment.notes ?? '');
+    final refCtrl =
+        TextEditingController(text: payment.referenceNumber ?? '');
+    String selectedMode = payment.paymentMode;
+    String selectedType = payment.paymentType;
+    DateTime payDate =
+        DateTime.tryParse(payment.paymentDate) ?? DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'भुगतान बदलें / Edit Payment',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  VoiceTextFormField(
+                    controller: amountCtrl,
+                    keyboardType: TextInputType.number,
+                    isNumeric: true,
+                    labelText: 'राशि / Amount (₹)',
+                    prefixText: '₹ ',
+                    hintText: '0',
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('तारीख: ',
+                          style: TextStyle(fontSize: 14)),
+                      TextButton.icon(
+                        icon: const Icon(Icons.calendar_today, size: 16),
+                        label: Text(
+                            '${payDate.year}-${payDate.month.toString().padLeft(2, '0')}-${payDate.day.toString().padLeft(2, '0')}'),
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: ctx,
+                            initialDate: payDate,
+                            firstDate: DateTime(2020),
+                            lastDate:
+                                DateTime.now().add(const Duration(days: 1)),
+                          );
+                          if (picked != null) {
+                            setModalState(() => payDate = picked);
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final mode in ['cash', 'upi', 'bank'])
+                        ChoiceChip(
+                          label: Text(mode.toUpperCase(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: selectedMode == mode
+                                    ? Colors.white
+                                    : AppTheme.textPrimary,
+                              )),
+                          selected: selectedMode == mode,
+                          selectedColor: AppTheme.primary,
+                          onSelected: (sel) {
+                            if (sel) {
+                              setModalState(() => selectedMode = mode);
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final type
+                          in AppConstants.employeePaymentTypes)
+                        ChoiceChip(
+                          label: Text(
+                            AppConstants.employeePaymentTypeLabels[type] ??
+                                type,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: selectedType == type
+                                  ? Colors.white
+                                  : AppTheme.textPrimary,
+                            ),
+                          ),
+                          selected: selectedType == type,
+                          selectedColor: AppTheme.primary,
+                          onSelected: (sel) {
+                            if (sel) {
+                              setModalState(() => selectedType = type);
+                            }
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  VoiceTextFormField(
+                    controller: notesCtrl,
+                    labelText: 'नोट / Notes',
+                    hintText: 'कोई जरूरी जानकारी...',
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.check, size: 18),
+                      label: const Text('सेव करें / Save',
+                          style: TextStyle(fontSize: 15)),
+                      onPressed: () async {
+                        final amount =
+                            double.tryParse(amountCtrl.text.trim());
+                        if (amount == null || amount <= 0) {
+                          showError(ctx, 'कृपया सही राशि दें / Enter valid amount');
+                          return;
+                        }
+                        Navigator.pop(ctx);
+                        try {
+                          await ref
+                              .read(appRepositoryProvider)
+                              .updateEmployeePayment(
+                                id: payment.id,
+                                employeeId: employeeId,
+                                paymentDate: payDate,
+                                amount: amount,
+                                paymentMode: selectedMode,
+                                paymentType: selectedType,
+                                referenceNumber: refCtrl.text.trim().isEmpty
+                                    ? null
+                                    : refCtrl.text.trim(),
+                                notes: notesCtrl.text.trim().isEmpty
+                                    ? null
+                                    : notesCtrl.text.trim(),
+                              );
+                          if (context.mounted) {
+                            showSuccess(context,
+                                'भुगतान अपडेट हो गया / Payment updated');
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            showError(context,
+                                'अपडेट में त्रुटि / Update failed');
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _sharePaymentRecord(
+    BuildContext context,
+    WidgetRef ref,
+    EmployeePaymentsTableData payment,
+  ) {
+    final employeesAsync = ref.read(employeesStreamProvider(''));
+    final employee = employeesAsync.maybeWhen(
+      data: (list) => list.where((e) => e.id == employeeId).firstOrNull,
+      orElse: () => null,
+    );
+
+    final buffer = StringBuffer();
+    buffer.writeln('🌾 *भोला ट्रेडर्स / BHOLA TRADERS* 🌾');
+    buffer.writeln('💳 *भुगतान रसीद / Payment Receipt*');
+    buffer.writeln('--------------------------------');
+    if (employee != null) {
+      buffer.writeln('👤 *कर्मचारी / Staff:* ${employee.name}');
+      if (employee.phone != null && employee.phone!.isNotEmpty) {
+        buffer.writeln('📞 *फ़ोन:* ${employee.phone}');
+      }
+    }
+    buffer.writeln('📅 *तारीख / Date:* ${payment.paymentDate}');
+    buffer.writeln(
+        '💰 *राशि / Amount:* ₹${payment.amount.toStringAsFixed(0)}');
+    buffer.writeln(
+        '💳 *भुगतान माध्यम / Mode:* ${payment.paymentMode.toUpperCase()}');
+    buffer.writeln(
+        '📌 *प्रकार / Type:* ${AppConstants.employeePaymentTypeLabels[payment.paymentType] ?? payment.paymentType}');
+    if (payment.notes != null && payment.notes!.isNotEmpty) {
+      buffer.writeln('📝 *नोट / Notes:* ${payment.notes}');
+    }
+    buffer.writeln('--------------------------------');
+    buffer.writeln('भोला ट्रेडर्स  (विश्वकर्मा चौक)');
+    buffer.write('📞 +91 9582863135     किसी भी प्रश्न के लिए संपर्क करें।');
+
+    final message = buffer.toString();
+    final phone = employee?.phone;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'भुगतान रसीद शेयर करें / Share Receipt',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                constraints: const BoxConstraints(maxHeight: 160),
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                        fontSize: 12, height: 1.4, fontFamily: 'monospace'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                      label: const Text('WhatsApp',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AttendanceShareService.sendViaWhatsApp(
+                            phone: phone, message: message);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue.shade700,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      icon: const Icon(Icons.sms_outlined, size: 18),
+                      label: const Text('SMS / संदेश',
+                          style: TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AttendanceShareService.sendViaSms(
+                            phone: phone, message: message);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  icon: const Icon(Icons.share, size: 18),
+                  label: const Text('अन्य ऐप में भेजें / Other Apps',
+                      style: TextStyle(fontSize: 13)),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    Share.share(message);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -897,34 +1652,76 @@ class _EmployeePaymentsTab extends ConsumerWidget {
               margin: const EdgeInsets.only(bottom: 8),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
-              child: ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: color.withOpacity(0.1),
-                  child: Icon(
-                    p.paymentMode == 'cash'
-                        ? Icons.money_rounded
-                        : Icons.phone_android_rounded,
-                    color: color,
-                    size: 20,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () => _showPaymentActions(context, ref, p),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 10),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: color.withOpacity(0.1),
+                        child: Icon(
+                          p.paymentMode == 'cash'
+                              ? Icons.money_rounded
+                              : Icons.phone_android_rounded,
+                          color: color,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              formatRupees(p.amount),
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: color),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${p.paymentDate} • ${p.paymentMode.toUpperCase()} • ${AppConstants.employeePaymentTypeLabels[p.paymentType] ?? p.paymentType}',
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.textSecondary),
+                            ),
+                            if (p.notes != null && p.notes!.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(
+                                  p.notes!,
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                      fontStyle: FontStyle.italic),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () =>
+                            _sharePaymentRecord(context, ref, p),
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(Icons.share_rounded,
+                              size: 16, color: Colors.blue.shade700),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                title: Text(
-                  formatRupees(p.amount),
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16, color: color),
-                ),
-                subtitle: Text(
-                  '${p.paymentDate} • ${p.paymentMode.toUpperCase()} • ${AppConstants.employeePaymentTypeLabels[p.paymentType] ?? p.paymentType}',
-                  style: const TextStyle(
-                      fontSize: 12, color: AppTheme.textSecondary),
-                ),
-                trailing: p.notes != null && p.notes!.isNotEmpty
-                    ? Tooltip(
-                        message: p.notes!,
-                        child: const Icon(Icons.info_outline,
-                            size: 18, color: Colors.grey),
-                      )
-                    : null,
               ),
             );
           },

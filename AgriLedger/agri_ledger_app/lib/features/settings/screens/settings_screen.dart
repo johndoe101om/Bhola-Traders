@@ -250,98 +250,285 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
 // ── SYNC SECTION (isolated to prevent crashes) ────────────────────────
 
-class _SyncSection extends ConsumerWidget {
+class _SyncSection extends StatelessWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Use a try-catch approach with error handling for the sync engine
-    try {
-      final engine = ref.watch(syncEngineProvider);
-      final syncCountAsync = ref.watch(syncCountProvider);
-      final syncCount = syncCountAsync.valueOrNull ?? 0;
+  Widget build(BuildContext context) {
+    // Isolate Riverpod providers in a Consumer so errors don't crash the page
+    return Consumer(
+      builder: (context, ref, child) {
+        try {
+          final engine = ref.watch(syncEngineProvider);
+          final syncCountAsync = ref.watch(syncCountProvider);
+          final syncCount = syncCountAsync.valueOrNull ?? 0;
+          final isBusy = engine.state.isBusy;
+          final isOnline = engine.isOnline;
 
-      return ListTile(
-        leading: const Icon(Icons.sync_rounded, color: AppTheme.primary),
-        title: Text(engine.statusText,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        subtitle: syncCount > 0
-            ? Text('$syncCount entries pending upload',
-                style: TextStyle(color: Colors.orange[700]))
-            : const Text('All data synced',
-                style: TextStyle(color: AppTheme.textSecondary)),
-        trailing: ElevatedButton(
-          onPressed: () async {
-            try {
-              final result = await engine.syncNow(force: true);
-              if (context.mounted) {
-                if (result.success) {
-                  if (result.pushed > 0 || result.pulled > 0) {
-                    showSuccess(
-                        context, 'Synced! ↑${result.pushed} ↓${result.pulled}');
-                  } else {
-                    showSuccess(context, 'Already up to date ✓');
-                  }
-                } else {
-                  showError(context, result.message ?? 'Sync failed');
-                }
-              }
-            } catch (e) {
-              if (context.mounted) showError(context, 'Sync error occurred');
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          ),
-          child: const Text('Sync Now', style: TextStyle(color: Colors.white)),
-        ),
-      );
-    } catch (e) {
-      debugPrint('[Settings] SyncEngine not available: $e');
-      return const ListTile(
-        leading: Icon(Icons.sync_disabled_rounded, color: Colors.grey),
-        title: Text('Sync unavailable',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        subtitle: Text('Sync engine could not start. Try restarting the app.'),
-      );
-    }
+          return Card(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppTheme.divider),
+            ),
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.sync_rounded,
+                          color: AppTheme.primary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'सिंक स्थिति / Sync Status',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              engine.statusText,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isOnline
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isOnline
+                                ? Colors.green.shade300
+                                : Colors.orange.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: isOnline ? Colors.green : Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isOnline ? 'Online' : 'Offline',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: isOnline
+                                    ? Colors.green.shade800
+                                    : Colors.orange.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: syncCount > 0
+                          ? Colors.orange.shade50
+                          : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: syncCount > 0
+                            ? Colors.orange.shade200
+                            : Colors.green.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          syncCount > 0
+                              ? Icons.pending_actions_rounded
+                              : Icons.check_circle_rounded,
+                          size: 18,
+                          color: syncCount > 0
+                              ? Colors.orange.shade800
+                              : Colors.green.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            syncCount > 0
+                                ? '$syncCount प्रविष्टियां अपलोड के लिए बाकी हैं'
+                                : 'सभी डेटा सिंक है / All data synced',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: syncCount > 0
+                                  ? Colors.orange.shade900
+                                  : Colors.green.shade800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 42,
+                    child: ElevatedButton.icon(
+                      onPressed: isBusy
+                          ? null
+                          : () async {
+                              try {
+                                final result =
+                                    await engine.syncNow(force: true);
+                                if (context.mounted) {
+                                  if (result.success) {
+                                    if (result.pushed > 0 ||
+                                        result.pulled > 0) {
+                                      showSuccess(context,
+                                          'Synced! ↑${result.pushed} ↓${result.pulled}');
+                                    } else {
+                                      showSuccess(
+                                          context, 'Already up to date ✓');
+                                    }
+                                  } else {
+                                    showError(context,
+                                        result.message ?? 'Sync failed');
+                                  }
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  showError(context, 'Sync error occurred');
+                                }
+                              }
+                            },
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.refresh_rounded, size: 18),
+                      label: Text(
+                        isBusy
+                            ? 'सिंक हो रहा है... / Syncing...'
+                            : 'अभी सिंक करें / Sync Now',
+                        style: const TextStyle(
+                            fontSize: 14, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        } catch (e) {
+          debugPrint('[Settings] SyncEngine not available: $e');
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.divider),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.sync_disabled_rounded, color: Colors.grey),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Sync engine not ready. Restart app to retry.',
+                    style: TextStyle(
+                        fontSize: 13, color: AppTheme.textSecondary),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+      },
+    );
   }
 }
 
 // ── CLEAR SYNC QUEUE (isolated) ──────────────────────────────────────
 
-class _ClearSyncQueueTile extends ConsumerWidget {
+class _ClearSyncQueueTile extends StatelessWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    int syncCount = 0;
-    try {
-      syncCount = ref.watch(syncCountProvider).valueOrNull ?? 0;
-    } catch (_) {}
+  Widget build(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        int syncCount = 0;
+        try {
+          syncCount = ref.watch(syncCountProvider).valueOrNull ?? 0;
+        } catch (_) {}
 
-    return ListTile(
-      leading: Icon(Icons.delete_outline_rounded, color: Colors.red[400]),
-      title: Text('सभी pending sync हटाएं',
-          style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.red[400])),
-      subtitle: Text(syncCount > 0
-          ? 'Clear $syncCount stuck sync queue items'
-          : 'No pending sync items'),
-      onTap: () async {
-        final ok = await confirmDialog(
-          context,
-          title: 'Clear Sync Queue?',
-          message: 'This will delete $syncCount pending sync items. '
-              'Your local data is safe.',
+        return ListTile(
+          leading: Icon(Icons.delete_outline_rounded, color: Colors.red[400]),
+          title: Text('सभी pending sync हटाएं',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red[400])),
+          subtitle: Text(syncCount > 0
+              ? 'Clear $syncCount stuck sync queue items'
+              : 'No pending sync items'),
+          onTap: () async {
+            final ok = await confirmDialog(
+              context,
+              title: 'Clear Sync Queue?',
+              message: 'This will delete $syncCount pending sync items. '
+                  'Your local data is safe.',
+            );
+            if (ok) {
+              try {
+                await ref.read(localDatabaseProvider).clearAllSyncQueue();
+                if (context.mounted) showSuccess(context, 'Sync queue cleared');
+              } catch (e) {
+                if (context.mounted) showError(context, 'An error occurred');
+              }
+            }
+          },
         );
-        if (ok) {
-          try {
-            await ref.read(localDatabaseProvider).clearAllSyncQueue();
-            if (context.mounted) showSuccess(context, 'Sync queue cleared');
-          } catch (e) {
-            if (context.mounted) showError(context, 'An error occurred');
-          }
-        }
       },
     );
   }

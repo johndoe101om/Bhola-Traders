@@ -439,6 +439,8 @@ class AppRepository {
 
   Stream<int> watchPendingSyncCount() => _local.watchPendingSyncCount();
 
+  Future<bool> pingKeepAlive() => _supabaseSync.pingKeepAlive();
+
   Future<SyncResult> syncNow({bool force = false}) async {
     if (!force && !await _isOnline) {
       return SyncResult(success: false, message: 'No internet connection');
@@ -1088,6 +1090,19 @@ class AppRepository {
           String employeeId) =>
       _local.watchAttendanceForEmployee(employeeId);
 
+  Future<void> deleteAttendance(String id) async {
+    await _local.deleteAttendance(id);
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.deleteAttendance(id);
+      } catch (_) {
+        await _queueForSync('attendance', id, 'delete', {'id': id});
+      }
+    } else {
+      await _queueForSync('attendance', id, 'delete', {'id': id});
+    }
+  }
+
   // ──────────────────────────────────────────────────────────────
   // EMPLOYEE PAYMENTS
   // ──────────────────────────────────────────────────────────────
@@ -1148,6 +1163,64 @@ class AppRepository {
       await _queueForSync('employee_payment', id, 'insert', payload);
     }
     return id;
+  }
+
+  Future<void> updateEmployeePayment({
+    required String id,
+    required String employeeId,
+    required DateTime paymentDate,
+    required double amount,
+    String paymentMode = 'cash',
+    String paymentType = 'wage',
+    String? referenceNumber,
+    String? notes,
+    String? voiceRaw,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    final dateStr = paymentDate.toIso8601String().substring(0, 10);
+
+    final companion = EmployeePaymentsTableCompanion(
+      id: Value(id),
+      employeeId: Value(employeeId),
+      paymentDate: Value(dateStr),
+      amount: Value(amount),
+      paymentMode: Value(paymentMode),
+      paymentType: Value(paymentType),
+      referenceNumber: Value(referenceNumber),
+      notes: Value(notes),
+      voiceRaw: Value(voiceRaw),
+      updatedAt: Value(now),
+      syncedAt: const Value(null),
+    );
+
+    await _local.upsertEmployeePayment(companion);
+
+    final payload = {
+      'id': id,
+      'employee_id': employeeId,
+      'payment_date': dateStr,
+      'amount': amount,
+      'payment_mode': paymentMode,
+      'payment_type': paymentType,
+      'reference_number': referenceNumber,
+      'notes': notes,
+      'voice_raw': voiceRaw,
+      'updated_at': now,
+    };
+
+    if (await _isOnline) {
+      try {
+        await _supabaseSync.pushEmployeePayment(payload);
+        await _local.upsertEmployeePayment(EmployeePaymentsTableCompanion(
+          id: Value(id),
+          syncedAt: Value(now),
+        ));
+      } catch (_) {
+        await _queueForSync('employee_payment', id, 'update', payload);
+      }
+    } else {
+      await _queueForSync('employee_payment', id, 'update', payload);
+    }
   }
 
   Future<List<EmployeePaymentsTableData>> getPaymentsForEmployee(

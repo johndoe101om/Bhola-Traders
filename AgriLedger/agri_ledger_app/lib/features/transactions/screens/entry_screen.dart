@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/app_utils.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/repositories/providers.dart';
 import '../../../data/local/local_database.dart';
 
@@ -309,15 +310,14 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const _SectionLabel('वजन (KG)'),
-                        TextFormField(
+                        VoiceTextFormField(
                           controller: _quantityCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          isNumeric: true,
                           style: const TextStyle(fontSize: 20),
-                          decoration: const InputDecoration(
-                            hintText: '0.0',
-                            suffixText: 'KG',
-                          ),
+                          hintText: '0.0',
+                          suffixText: 'KG',
                           onChanged: (_) => _recalcAmount(),
                         ),
                       ],
@@ -329,16 +329,15 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const _SectionLabel('रेट / Rate'),
-                        TextFormField(
+                        VoiceTextFormField(
                           controller: _rateCtrl,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          isNumeric: true,
                           style: const TextStyle(fontSize: 20),
-                          decoration: const InputDecoration(
-                            hintText: '0',
-                            prefixText: '₹ ',
-                            suffixText: '/KG',
-                          ),
+                          hintText: '0',
+                          prefixText: '₹ ',
+                          suffixText: '/KG',
                           onChanged: (_) => _recalcAmount(),
                         ),
                       ],
@@ -351,21 +350,20 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
             // ── AMOUNT ─────────────────────────────────────────────
             const _SectionLabel('रकम (₹) / Amount *'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
+              isNumeric: true,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                hintText: '0',
-                prefixText: '₹ ',
-                prefixStyle: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.primary),
-                filled: true,
-                fillColor: AppTheme.primary.withOpacity(0.05),
-              ),
+              hintText: '0',
+              prefixText: '₹ ',
+              prefixStyle: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primary),
+              filled: true,
+              fillColor: AppTheme.primary.withOpacity(0.05),
               validator: (v) =>
                   (v == null || v.isEmpty) ? 'Amount required' : null,
             ),
@@ -408,12 +406,11 @@ class _EntryScreenState extends ConsumerState<EntryScreen> {
 
             // ── NOTES ──────────────────────────────────────────────
             const _SectionLabel('नोट / Notes'),
-            TextFormField(
+            VoiceTextFormField(
               controller: _notesCtrl,
               maxLines: 2,
               style: const TextStyle(fontSize: 16),
-              decoration: const InputDecoration(
-                  hintText: 'कोई जरूरी जानकारी / Any extra info'),
+              hintText: 'कोई जरूरी जानकारी / Any extra info',
             ),
 
             // ── TIMESTAMP (edit mode only) ─────────────────────────
@@ -574,44 +571,76 @@ class _CommoditySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: AppConstants.commodities.map((c) {
-        final isSelected = c == selected;
-        final emoji = AppConstants.commodityEmoji[c] ?? '';
-        final label = AppConstants.commodityLabels[c]?.split('\n') ?? [c];
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => onChanged(c),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primary : Colors.white,
-                border: Border.all(
-                  color: isSelected ? AppTheme.primary : AppTheme.divider,
-                  width: isSelected ? 2 : 1,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Column(
-                children: [
-                  Text(emoji, style: const TextStyle(fontSize: 24)),
-                  const SizedBox(height: 4),
-                  Text(
-                    label.last,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
-                    ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: AppConstants.commodities.map((c) {
+          final isSelected = c == selected;
+          final emoji = AppConstants.commodityEmoji[c] ?? '🌾';
+          final hindi = AppConstants.commodityHindi[c] ?? c;
+          final english = AppConstants.commodityEnglish[c] ?? '';
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: GestureDetector(
+              onTap: () => onChanged(c),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 95,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppTheme.primary : Colors.white,
+                  border: Border.all(
+                    color: isSelected ? AppTheme.primary : AppTheme.divider,
+                    width: isSelected ? 2 : 1,
                   ),
-                ],
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: AppTheme.primary.withOpacity(0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(emoji, style: const TextStyle(fontSize: 28)),
+                    const SizedBox(height: 6),
+                    Text(
+                      hindi,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      english,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color:
+                            isSelected ? Colors.white70 : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 }

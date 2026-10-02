@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/app_utils.dart';
+import '../../../core/widgets/voice_text_field.dart';
 import '../../../data/repositories/providers.dart';
 import '../widgets/voice_reason_field.dart';
 
@@ -221,16 +222,14 @@ class _EmployeePaymentScreenState extends ConsumerState<EmployeePaymentScreen> {
             const SizedBox(height: 16),
 
             // ── Amount Input ──
-            TextFormField(
+            VoiceTextFormField(
               controller: _amountCtrl,
               keyboardType: TextInputType.number,
+              isNumeric: true,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              decoration: const InputDecoration(
-                labelText: 'रकम (₹) / Amount *',
-                hintText: '0.00',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.currency_rupee_rounded, size: 28),
-              ),
+              labelText: 'रकम (₹) / Amount *',
+              hintText: '0.00',
+              prefixIcon: const Icon(Icons.currency_rupee_rounded, size: 28),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) {
                   return 'रकम आवश्यक है / Amount is required';
@@ -299,14 +298,11 @@ class _EmployeePaymentScreenState extends ConsumerState<EmployeePaymentScreen> {
 
             // ── UPI / Bank Reference No ──
             if (_selectedMode != 'cash') ...[
-              TextFormField(
+              VoiceTextFormField(
                 controller: _refCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'यूटीआर / संदर्भ संख्या / Reference / UTR No.',
-                  hintText: 'e.g. 12-digit UPI ref',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.tag_rounded),
-                ),
+                labelText: 'यूटीआर / संदर्भ संख्या / Reference / UTR No.',
+                hintText: 'e.g. 12-digit UPI ref',
+                prefixIcon: const Icon(Icons.tag_rounded),
               ),
               const SizedBox(height: 16),
             ],
